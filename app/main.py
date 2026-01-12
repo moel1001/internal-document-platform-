@@ -1,11 +1,20 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from pydantic import BaseModel
 from datetime import datetime
 from prometheus_client import Counter, Histogram, generate_latest
 from fastapi.responses import Response
 import time
+import logging
+
 
 app = FastAPI(title="Document Validation Service")
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(message)s"
+)
+logger = logging.getLogger("document-service")
+
 
 # Metrics
 REQUEST_COUNT = Counter(
@@ -43,6 +52,8 @@ class ValidationResponse(BaseModel):
 def validate_document(document: DocumentRequest):
     start_time = time.time()
     REQUEST_COUNT.inc()
+    logger.info(f"validate_request document_id={document.document_id} type={document.document_type}")
+
 
     try:
         if not document.document_id.strip():
@@ -58,6 +69,8 @@ def validate_document(document: DocumentRequest):
 
         if not document.source_system.strip():
             raise ValueError("source_system is empty")
+        
+        logger.info(f"validate_result ACCEPTED document_id={document.document_id}")
 
         return ValidationResponse(
             document_id=document.document_id,
@@ -66,6 +79,9 @@ def validate_document(document: DocumentRequest):
 
     except ValueError as exc:
         VALIDATION_FAILURES.inc()
+
+        logger.warning(f"validate_result REJECTED document_id={document.document_id} reason={str(exc)}")
+
         return ValidationResponse(
             document_id=document.document_id,
             status="REJECTED",
@@ -82,3 +98,14 @@ def metrics():
         content=generate_latest(),
         media_type="text/plain"
     )
+
+
+@app.get("/health/live")
+def health_live():
+    return {"status": "alive"}
+
+
+@app.get("/health/ready")
+def health_ready():
+    return {"status": "ready"}
+
