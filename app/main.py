@@ -3,7 +3,6 @@ from pydantic import BaseModel
 from datetime import datetime
 from prometheus_client import Counter, Histogram, generate_latest
 from fastapi.responses import Response
-import time
 import logging
 
 
@@ -50,47 +49,43 @@ class ValidationResponse(BaseModel):
 
 @app.post("/validate", response_model=ValidationResponse)
 def validate_document(document: DocumentRequest):
-    start_time = time.time()
     REQUEST_COUNT.inc()
     logger.info(f"validate_request document_id={document.document_id} type={document.document_type}")
 
-
-    try:
-        if not document.document_id.strip():
-            raise ValueError("document_id is empty")
-
-        if document.document_type not in ALLOWED_DOCUMENT_TYPES:
-            raise ValueError("invalid document_type")
-
+    with REQUEST_LATENCY.time():
         try:
-            datetime.strptime(document.created_at, "%Y-%m-%d")
-        except ValueError:
-            raise ValueError("invalid created_at format")
+            if not document.document_id.strip():
+                raise ValueError("document_id is empty")
 
-        if not document.source_system.strip():
-            raise ValueError("source_system is empty")
-        
-        logger.info(f"validate_result ACCEPTED document_id={document.document_id}")
+            if document.document_type not in ALLOWED_DOCUMENT_TYPES:
+                raise ValueError("invalid document_type")
 
-        return ValidationResponse(
-            document_id=document.document_id,
-            status="ACCEPTED"
-        )
+            try:
+                datetime.strptime(document.created_at, "%Y-%m-%d")
+            except ValueError:
+                raise ValueError("invalid created_at format (expected YYYY-MM-DD)")
 
-    except ValueError as exc:
-        VALIDATION_FAILURES.inc()
 
-        logger.warning(f"validate_result REJECTED document_id={document.document_id} reason={str(exc)}")
+            if not document.source_system.strip():
+                raise ValueError("source_system is empty")
+            
+            logger.info(f"validate_result ACCEPTED document_id={document.document_id}")
 
-        return ValidationResponse(
-            document_id=document.document_id,
-            status="REJECTED",
-            reason=str(exc)
-        )
+            return ValidationResponse(
+                document_id=document.document_id,
+                status="ACCEPTED"
+            )
 
-    finally:
-        REQUEST_LATENCY.observe(time.time() - start_time)
+        except ValueError as exc:
+            VALIDATION_FAILURES.inc()
 
+            logger.warning(f"validate_result REJECTED document_id={document.document_id} reason={str(exc)}")
+
+            return ValidationResponse(
+                document_id=document.document_id,
+                status="REJECTED",
+                reason=str(exc)
+            )
 
 @app.get("/metrics")
 def metrics():
