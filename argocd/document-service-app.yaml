@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: document-service
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/moel1001/internal-document-platform-.git
+    targetRevision: main
+    path: helm/document-service
+    helm:
+      valueFiles:
+        - values.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: platform
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
