@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: document-service
+  labels:
+    release: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: document-service
+
+  namespaceSelector:
+    matchNames:
+      - platform
+
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
