@@ -1,5 +1,5 @@
 # Internal Document Platform (Document Validation Service)
-![CI](https://github.com/moel1001/internal-document-platform/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/moel1001/internal-document-platform-/actions/workflows/ci.yml/badge.svg)
 
 A cloud-native backend service deployed via **GitOps** (Argo CD) with **CI/CD** (GitHub Actions → GHCR) and full **observability** (Prometheus + Grafana).
 
