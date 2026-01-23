@@ -14,3 +14,6 @@ A cloud-native backend service deployed via **GitOps** (Argo CD) with **CI/CD** 
 - Dashboarding with **Grafana** (traffic + latency panels)
 
 ---
+## Architecture
+
+![Architecture diagram](docs/diagrams/architecture.svg)
