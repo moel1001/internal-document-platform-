@@ -7,7 +7,6 @@ import logging
 from pathlib import Path
 
 
-
 app = FastAPI(title="Document Validation Service")
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -82,6 +81,7 @@ def validate_document(document: DocumentRequest):
 
 
 UI_HTML = Path(__file__).with_name("ui.html").read_text(encoding="utf-8")
+
 
 @app.get("/", include_in_schema=False)
 def root():
