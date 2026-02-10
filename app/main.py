@@ -2,33 +2,29 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from datetime import datetime
 from prometheus_client import Counter, Histogram, generate_latest
-from fastapi.responses import Response
+from fastapi.responses import Response, HTMLResponse, RedirectResponse
 import logging
+from pathlib import Path
 
 
 app = FastAPI(title="Document Validation Service")
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger("document-service")
 
-
-# Metrics
 REQUEST_COUNT = Counter(
     "document_validation_requests_total",
-    "Total number of document validation requests"
+    "Total number of document validation requests",
 )
 
 VALIDATION_FAILURES = Counter(
     "document_validation_failures_total",
-    "Total number of failed document validations"
+    "Total number of failed document validations",
 )
 
 REQUEST_LATENCY = Histogram(
     "document_validation_request_latency_seconds",
-    "Latency of document validation requests"
+    "Latency of document validation requests",
 )
 
 ALLOWED_DOCUMENT_TYPES = {"invoice", "delivery_note", "certificate"}
@@ -50,7 +46,9 @@ class ValidationResponse(BaseModel):
 @app.post("/validate", response_model=ValidationResponse)
 def validate_document(document: DocumentRequest):
     REQUEST_COUNT.inc()
-    logger.info(f"validate_request document_id={document.document_id} type={document.document_type}")
+    logger.info(
+        f"validate_request document_id={document.document_id} type={document.document_type}"
+    )
 
     with REQUEST_LATENCY.time():
         try:
@@ -65,34 +63,39 @@ def validate_document(document: DocumentRequest):
             except ValueError:
                 raise ValueError("invalid created_at format (expected YYYY-MM-DD)")
 
-
             if not document.source_system.strip():
                 raise ValueError("source_system is empty")
-            
+
             logger.info(f"validate_result ACCEPTED document_id={document.document_id}")
 
-            return ValidationResponse(
-                document_id=document.document_id,
-                status="ACCEPTED"
-            )
+            return ValidationResponse(document_id=document.document_id, status="ACCEPTED")
 
         except ValueError as exc:
             VALIDATION_FAILURES.inc()
-
-            logger.warning(f"validate_result REJECTED document_id={document.document_id} reason={str(exc)}")
-
-            return ValidationResponse(
-                document_id=document.document_id,
-                status="REJECTED",
-                reason=str(exc)
+            logger.warning(
+                f"validate_result REJECTED document_id={document.document_id} reason={str(exc)}"
             )
+            return ValidationResponse(
+                document_id=document.document_id, status="REJECTED", reason=str(exc)
+            )
+
+
+UI_HTML = Path(__file__).with_name("ui.html").read_text(encoding="utf-8")
+
+
+@app.get("/", include_in_schema=False)
+def root():
+    return RedirectResponse(url="/ui")
+
+
+@app.get("/ui", response_class=HTMLResponse, include_in_schema=False)
+def ui():
+    return UI_HTML
+
 
 @app.get("/metrics")
 def metrics():
-    return Response(
-        content=generate_latest(),
-        media_type="text/plain"
-    )
+    return Response(content=generate_latest(), media_type="text/plain")
 
 
 @app.get("/health/live")
@@ -103,4 +106,3 @@ def health_live():
 @app.get("/health/ready")
 def health_ready():
     return {"status": "ready"}
-

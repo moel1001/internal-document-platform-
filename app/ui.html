@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Document Service UI</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: system-ui, -apple-system, sans-serif;
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 0 16px;
+      }
+
+      .card {
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        padding: 16px;
+      }
+
+      label {
+        display: block;
+        margin-top: 10px;
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      input,
+      select {
+        width: 100%;
+        padding: 8px 10px;
+        margin-top: 6px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        height: 38px;
+        font-size: 14px;
+      }
+
+      button {
+        padding: 8px 12px;
+        border-radius: 10px;
+        border: 1px solid #333;
+        cursor: pointer;
+        height: 36px;
+        font-size: 14px;
+        transition: background-color 140ms ease, border-color 140ms ease,
+          box-shadow 140ms ease, transform 60ms ease;
+      }
+
+      button:hover {
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      }
+
+      button:active {
+        transform: translateY(1px);
+      }
+
+      button:focus-visible {
+        outline: 3px solid rgba(59, 130, 246, 0.35);
+        outline-offset: 2px;
+      }
+
+      #exampleBtn {
+        background: #eef2ff;
+        border-color: #4f46e5;
+        color: #1e1b4b;
+      }
+
+      #exampleBtn:hover {
+        background: #e0e7ff;
+        border-color: #4338ca;
+      }
+
+      #badExampleBtn {
+        background: #fff1f2;
+        border-color: #e11d48;
+        color: #881337;
+      }
+
+      #badExampleBtn:hover {
+        background: #ffe4e6;
+        border-color: #be123c;
+      }
+
+      #validateBtn {
+        background: #16a34a;
+        border-color: #15803d;
+        color: #ffffff;
+        font-weight: 700;
+      }
+
+      #validateBtn:hover {
+        background: #15803d;
+        border-color: #166534;
+      }
+
+      #loadValidBtn {
+        background: #ecfdf5;
+        border-color: #10b981;
+        color: #064e3b;
+      }
+
+      #loadValidBtn:hover {
+        background: #d1fae5;
+        border-color: #059669;
+      }
+
+      #loadInvalidBtn {
+        background: #fffbeb;
+        border-color: #f59e0b;
+        color: #7c2d12;
+      }
+
+      #loadInvalidBtn:hover {
+        background: #fef3c7;
+        border-color: #d97706;
+      }
+
+      #stopLoadBtn {
+        background: #ef4444;
+        border-color: #dc2626;
+        color: #ffffff;
+        font-weight: 700;
+      }
+
+      #stopLoadBtn:hover {
+        background: #dc2626;
+        border-color: #b91c1c;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      pre {
+        background: #f6f6f6;
+        padding: 12px;
+        border-radius: 12px;
+        overflow: auto;
+      }
+
+      .muted {
+        color: #666;
+        font-size: 14px;
+      }
+
+      code {
+        background: #f2f2f2;
+        padding: 2px 6px;
+        border-radius: 6px;
+      }
+
+      .actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 14px;
+      }
+
+      .actions-left {
+        display: flex;
+        gap: 10px;
+      }
+
+      .actions-left button {
+        white-space: nowrap;
+      }
+
+      #loadValidBtn,
+      #loadInvalidBtn {
+        padding: 8px 10px;
+        min-width: 160px;
+      }
+
+      .curl-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .btn-small {
+        height: 30px;
+        padding: 6px 10px;
+        font-size: 13px;
+      }
+
+      @media (max-width: 640px) {
+        body {
+          margin: 20px auto;
+        }
+
+        .row {
+          grid-template-columns: 1fr;
+        }
+
+        .actions {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 10px;
+        }
+
+        .actions-left {
+          flex-wrap: wrap;
+        }
+
+        button {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Document Validation Service</h1>
+    <p class="muted">
+      This UI calls <code>POST /validate</code> on the same host (so no CORS
+      needed).
+    </p>
+
+    <p class="muted">
+      Use the UI below, or call the API directly: <a href="/docs">Swagger</a> ·
+      <a href="/openapi.json">OpenAPI</a> · <a href="/metrics">Metrics</a>
+    </p>
+
+    <div class="card">
+      <form id="docForm" novalidate>
+        <div class="row">
+          <div>
+            <label for="document_id">document_id</label>
+            <input
+              id="document_id"
+              name="document_id"
+              placeholder="INV-2026-0001"
+            />
+          </div>
+          <div>
+            <label for="document_type">document_type</label>
+            <select id="document_type" name="document_type">
+              <option value="">-- select --</option>
+              <option value="invoice">invoice</option>
+              <option value="delivery_note">delivery_note</option>
+              <option value="certificate">certificate</option>
+              <option value="credit_note">(invalid) credit_note</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="created_at">created_at</label>
+            <input id="created_at" name="created_at" type="date" />
+          </div>
+          <div>
+            <label for="source_system">source_system</label>
+            <input id="source_system" name="source_system" placeholder="sap" />
+          </div>
+        </div>
+
+        <div class="actions">
+          <div class="actions-left">
+            <button type="button" id="exampleBtn">Fill example</button>
+            <button type="button" id="badExampleBtn">Fill invalid example</button>
+          </div>
+          <button type="submit" id="validateBtn">Validate</button>
+        </div>
+
+        <div
+          style="
+            margin-top: 14px;
+            border-top: 1px solid #eee;
+            padding-top: 14px;
+          "
+        >
+          <div class="row">
+            <div>
+              <label for="loadCount">load_requests</label>
+              <input
+                id="loadCount"
+                type="number"
+                min="1"
+                max="5000"
+                value="50"
+              />
+              <div class="muted" style="margin-top: 6px">
+                Tip: start with 50–200 locally. In kind, keep it modest.
+              </div>
+            </div>
+            <div>
+              <label>load_actions</label>
+              <div class="actions" style="margin-top: 6px">
+                <div class="actions-left">
+                  <button type="button" id="loadValidBtn">
+                    Generate valid load
+                  </button>
+                  <button type="button" id="loadInvalidBtn">
+                    Generate invalid load
+                  </button>
+                </div>
+                <button type="button" id="stopLoadBtn">Stop</button>
+              </div>
+            </div>
+          </div>
+
+          <h2 style="margin-top: 12px">Load status</h2>
+          <pre id="loadStatus">Idle.</pre>
+        </div>
+      </form>
+    </div>
+
+    <h2>Result</h2>
+    <pre id="result">Submit the form…</pre>
+
+    <div class="curl-head">
+      <h2 style="margin: 0">Equivalent curl</h2>
+      <button type="button" id="copyCurlBtn" class="btn-small">Copy</button>
+      <span id="copyCurlStatus" class="muted"></span>
+    </div>
+    <pre id="curl">—</pre>
+
+    <script>
+      const form = document.getElementById("docForm");
+      const result = document.getElementById("result");
+      const curl = document.getElementById("curl");
+      const copyCurlBtn = document.getElementById("copyCurlBtn");
+      const copyCurlStatus = document.getElementById("copyCurlStatus");
+      let lastCurlText = "";
+
+      const exampleBtn = document.getElementById("exampleBtn");
+      const badExampleBtn = document.getElementById("badExampleBtn");
+
+      const loadValidBtn = document.getElementById("loadValidBtn");
+      const loadInvalidBtn = document.getElementById("loadInvalidBtn");
+      const stopLoadBtn = document.getElementById("stopLoadBtn");
+      const loadCountEl = document.getElementById("loadCount");
+      const loadStatus = document.getElementById("loadStatus");
+
+      const allowedTypes = ["invoice", "delivery_note", "certificate"];
+      const sourceSystems = [
+        "sap",
+        "oracle-erp",
+        "d365",
+        "workday",
+        "navision",
+        "custom-erp",
+      ];
+
+      let lastExampleKey = null;
+      let loadAbort = { stop: false };
+
+      function randInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+
+      function choice(arr) {
+        return arr[randInt(0, arr.length - 1)];
+      }
+
+      function randomDateISO(daysBack = 90) {
+        const d = new Date();
+        d.setDate(d.getDate() - randInt(0, daysBack));
+        return d.toISOString().slice(0, 10);
+      }
+
+      function pad(n, width = 4) {
+        return String(n).padStart(width, "0");
+      }
+
+      function buildPayloadFromForm() {
+        return {
+          document_id: document.getElementById("document_id").value.trim(),
+          document_type: document.getElementById("document_type").value,
+          created_at: document.getElementById("created_at").value,
+          source_system: document.getElementById("source_system").value.trim(),
+        };
+      }
+
+      function updateCurl(payload) {
+        const base = window.location.origin;
+        lastCurlText = `curl -s -X POST ${base}/validate \\
+        -H "Content-Type: application/json" \\
+        -d '${JSON.stringify(payload)}' | jq`;
+        curl.textContent = lastCurlText;
+      }
+
+      copyCurlBtn.addEventListener("click", async () => {
+        const originalText = copyCurlBtn.textContent;
+
+        try {
+          const textToCopy = lastCurlText || curl.textContent || "";
+          await navigator.clipboard.writeText(textToCopy);
+
+          copyCurlBtn.textContent = "✅ Copied";
+          copyCurlBtn.disabled = true;
+
+          setTimeout(() => {
+            copyCurlBtn.textContent = originalText;
+            copyCurlBtn.disabled = false;
+          }, 1200);
+        } catch (e) {
+          copyCurlBtn.textContent = "Copy failed";
+          copyCurlBtn.disabled = true;
+
+          setTimeout(() => {
+            copyCurlBtn.textContent = originalText;
+            copyCurlBtn.disabled = false;
+          }, 1600);
+        }
+      });
+
+      function setDocumentType(value) {
+        const sel = document.getElementById("document_type");
+        if (![...sel.options].some((o) => o.value === value)) {
+          const opt = document.createElement("option");
+          opt.value = value;
+          opt.textContent = value === "" ? "-- select --" : value;
+          sel.appendChild(opt);
+        }
+        sel.value = value;
+      }
+
+      function applyToForm(payload) {
+        document.getElementById("document_id").value = payload.document_id;
+        setDocumentType(payload.document_type);
+        document.getElementById("created_at").value = payload.created_at;
+        document.getElementById("source_system").value = payload.source_system;
+        updateCurl(payload);
+      }
+
+      function makeValidExample() {
+        const t = choice(allowedTypes);
+        const sys = choice(sourceSystems);
+        const date = randomDateISO(120);
+        const prefix =
+          t === "invoice" ? "INV" : t === "delivery_note" ? "DN" : "CERT";
+        const id = `${prefix}-${new Date().getFullYear()}-${pad(
+          randInt(1, 9999)
+        )}`;
+
+        return {
+          document_id: id,
+          document_type: t,
+          created_at: date,
+          source_system: sys,
+        };
+      }
+
+      function makeInvalidExample() {
+        const kind = choice([
+          "EMPTY_ID",
+          "EMPTY_DATE",
+          "EMPTY_SOURCE",
+          "EMPTY_TYPE",
+          "INVALID_TYPE",
+        ]);
+
+        const base = makeValidExample();
+
+        if (kind === "EMPTY_ID") base.document_id = "   ";
+        else if (kind === "EMPTY_DATE") base.created_at = "";
+        else if (kind === "EMPTY_SOURCE") base.source_system = "   ";
+        else if (kind === "EMPTY_TYPE") base.document_type = "";
+        else if (kind === "INVALID_TYPE")
+          base.document_type = choice([
+            "credit_note",
+            "invoicee",
+            "unknown_type",
+            "receipt",
+            "invoice-v2",
+          ]);
+
+        return base;
+      }
+
+      function generateDifferent(generatorFn) {
+        for (let i = 0; i < 8; i++) {
+          const p = generatorFn();
+          const key = JSON.stringify(p);
+          if (key !== lastExampleKey) {
+            lastExampleKey = key;
+            return p;
+          }
+        }
+        const p = generatorFn();
+        lastExampleKey = JSON.stringify(p);
+        return p;
+      }
+
+      function sleep(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
+
+      async function runLoad({ count, mode }) {
+        loadAbort.stop = false;
+
+        let ok = 0;
+        let rejected = 0;
+        let errors = 0;
+
+        const start = Date.now();
+        loadStatus.textContent = `Starting ${count} requests (${mode})…`;
+
+        for (let i = 1; i <= count; i++) {
+          if (loadAbort.stop) break;
+
+          const payload =
+            mode === "valid" ? makeValidExample() : makeInvalidExample();
+
+          try {
+            const res = await fetch("/validate", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+
+            if (!res.ok) {
+              errors++;
+            } else {
+              const data = await res.json();
+              if (data.status === "ACCEPTED") ok++;
+              else rejected++;
+            }
+          } catch (e) {
+            errors++;
+          }
+
+          if (i % 10 === 0 || i === count) {
+            const elapsed = ((Date.now() - start) / 1000).toFixed(1);
+            loadStatus.textContent =
+              `Progress: ${i}/${count}\n` +
+              `ACCEPTED: ${ok}\nREJECTED: ${rejected}\nHTTP/JS errors: ${errors}\n` +
+              `Elapsed: ${elapsed}s`;
+          }
+
+          await sleep(10);
+        }
+
+        const elapsed = ((Date.now() - start) / 1000).toFixed(1);
+        const stopped = loadAbort.stop ? " (stopped)" : "";
+        loadStatus.textContent =
+          `Done${stopped}\n` +
+          `ACCEPTED: ${ok}\nREJECTED: ${rejected}\nHTTP/JS errors: ${errors}\n` +
+          `Elapsed: ${elapsed}s`;
+      }
+
+      exampleBtn.addEventListener("click", () => {
+        const payload = generateDifferent(makeValidExample);
+        applyToForm(payload);
+      });
+
+      badExampleBtn.addEventListener("click", () => {
+        const payload = generateDifferent(makeInvalidExample);
+        applyToForm(payload);
+      });
+
+      loadValidBtn.addEventListener("click", async () => {
+        const count = Math.max(
+          1,
+          Math.min(5000, parseInt(loadCountEl.value || "50", 10))
+        );
+        await runLoad({ count, mode: "valid" });
+      });
+
+      loadInvalidBtn.addEventListener("click", async () => {
+        const count = Math.max(
+          1,
+          Math.min(5000, parseInt(loadCountEl.value || "50", 10))
+        );
+        await runLoad({ count, mode: "invalid" });
+      });
+
+      stopLoadBtn.addEventListener("click", () => {
+        loadAbort.stop = true;
+      });
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const payload = buildPayloadFromForm();
+        updateCurl(payload);
+
+        result.textContent = "Sending request…";
+        try {
+          const res = await fetch("/validate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const data = await res.json();
+          result.textContent = JSON.stringify(
+            { http_status: res.status, response: data },
+            null,
+            2
+          );
+        } catch (err) {
+          result.textContent = "Request failed: " + err;
+        }
+      });
+
+      const initial = makeValidExample();
+      lastExampleKey = JSON.stringify(initial);
+      applyToForm(initial);
+    </script>
+  </body>
+</html>
