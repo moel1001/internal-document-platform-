@@ -56,7 +56,10 @@ function buildPayloadFromForm() {
 }
 
 function updateCurl(payload) {
-  const base = window.location.origin;
+  const base =
+    window.location.protocol === "https:"
+      ? `http://${window.location.host}`
+      : window.location.origin;
 
   const prettyJson = JSON.stringify(payload, null, 2)
     .split("\n")
