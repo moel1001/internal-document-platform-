@@ -9,6 +9,10 @@ from pathlib import Path
 
 app = FastAPI(title="Document Validation Service")
 
+from fastapi.staticfiles import StaticFiles
+BASE_DIR = Path(__file__).parent
+app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger("document-service")
 
