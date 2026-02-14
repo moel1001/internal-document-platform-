@@ -1,6 +1,6 @@
 name: CI
 
-# run when main is updated
+# run when main is updated, or about to be updated by a PR
 on:
   push:
     branches: ["main"]
@@ -8,11 +8,12 @@ on:
     branches: ["main"]
 
 permissions:
-  contents: read
+  contents: write
   packages: write # write for packages to be able to push images to GHCR
 
 jobs:
   build-and-push:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       # pull repo code into the VM
@@ -51,6 +52,18 @@ jobs:
         with:
           context: .
           push: ${{ github.event_name == 'push' }}
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/document-service:latest
-            ghcr.io/${{ github.repository_owner }}/document-service:${{ github.sha }}
+          tags: ghcr.io/${{ github.repository_owner }}/document-service:${{ github.sha }}
+
+
+      - name: Update Helm values with new image tag
+        if: github.event_name == 'push'
+        run: |
+          sed -i "s/^  tag: .*/  tag: \"${{ github.sha }}\"/" helm/document-service/values.yaml
+
+
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          git add helm/document-service/values.yaml
+          git commit -m "ci: update image tag to ${{ github.sha }}" || echo "No changes to commit"
+          git push
