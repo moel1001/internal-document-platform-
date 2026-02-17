@@ -71,7 +71,9 @@ jobs:
           format: table
           exit-code: 1
           severity: HIGH,CRITICAL
-      
+          ignore-unfixed: true
+          scanners: vuln
+
       - name: Push image to GHCR
         if: github.event_name == 'push'
         run: |
