@@ -56,14 +56,27 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # build images using Dockerfile and push to GHCR
-      - name: Build and push
+      - name: Build image
         uses: docker/build-push-action@v6
         with:
           context: .
-          push: ${{ github.event_name == 'push' }}
+          push: false
+          load: true
           tags: ghcr.io/${{ github.repository_owner }}/document-service:${{ github.sha }}
 
-
+      - name: Scan container image with Trivy
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: ghcr.io/${{ github.repository_owner }}/document-service:${{ github.sha }}
+          format: table
+          exit-code: 1
+          severity: HIGH,CRITICAL
+      
+      - name: Push image to GHCR
+        if: github.event_name == 'push'
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/document-service:${{ github.sha }}
+    
       - name: Update Helm values with new image tag
         if: github.event_name == 'push'
         run: |
