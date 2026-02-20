@@ -28,6 +28,8 @@ It focuses on correctness, visibility, and automation rather than feature comple
 
 ![Architecture diagram](docs/diagrams/architecture.svg)
 
+→ See “Observability Dashboards” section below for live monitoring examples.
+
 ---
 ## What This Repo Contains
 
@@ -332,12 +334,55 @@ Login:
 user: admin
 password: (from command above)
 
+---
+
+## Observability Dashboards
+
+The platform includes operational dashboards designed for production-style monitoring and incident analysis.
+
+### Document Service – Observability
+
+Tracks:
+- Request rate (req/s)
+- Rejection rate (%)
+- Accepted vs Rejected trends
+- Failure reason distribution
+- Traffic distribution by document type
+
+![Observability Dashboard](docs/screenshots/Grafana_Dashboard_Observability.png)
+
+---
+
+### Latency & Performance
+
+Tracks:
+- P50 / P95 / P99 latency
+- Latency by result (ACCEPTED vs REJECTED)
+- Latency by document type
+
+![Latency Dashboard](docs/screenshots/Grafana_Dashboard_Latency.png)
+
+---
+
+These dashboards are based on the metrics exposed in the application:
+
+- `document_validation_requests_total`
+- `document_validation_failures_total`
+- `document_validation_request_latency_seconds`
+
+The dashboards focus on:
+- Detecting quality degradation
+- Identifying document-type-specific issues
+- Performance regression detection
+- Incident triage support
+
 ## Centralized Logging: Loki + Promtail
 
 The project initially focused on metrics based observability using Prometheus and Grafana.  
 To complete the observability stack, centralized logging was later added using **Loki** and **Promtail**.
 
 While metrics show what is happening such as traffic and latency, logs explain why it happens, for example why a validation was rejected or whether errors correlate with latency spikes.
+
 ---
 
 ### Logging Architecture
