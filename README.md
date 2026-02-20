@@ -332,12 +332,134 @@ Login:
 user: admin
 password: (from command above)
 
+## Centralized Logging: Loki + Promtail
+
+The project initially focused on metrics based observability using Prometheus and Grafana.  
+To complete the observability stack, centralized logging was later added using **Loki** and **Promtail**.
+
+While metrics show what is happening such as traffic and latency, logs explain why it happens, for example why a validation was rejected or whether errors correlate with latency spikes.
+---
+
+### Logging Architecture
+
+Application Pods (`platform` namespace)  
+→ Promtail (`logging` namespace)  
+→ Loki (filesystem storage)  
+→ Grafana (`monitoring` namespace)
+
+- Promtail tails Kubernetes container logs automatically
+- Loki stores logs locally (filesystem mode)
+- Grafana queries Loki via Kubernetes DNS (`loki.logging`)
+- No external storage or cloud services are used
+
+---
+
+### Install Loki + Promtail
+
+Create namespace:
+
+```bash
+kubectl create namespace logging
+```
+
+Add Helm repo:
+
+```bash
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+```
+
+Install Loki stack:
+
+```bash
+helm upgrade --install loki grafana/loki-stack \
+  -n logging \
+  --set grafana.enabled=false \
+  --set promtail.enabled=true \
+  --set loki.persistence.enabled=false \
+  --set loki.image.tag=2.9.8
+```
+
+#### Why Loki 2.9.8?
+
+Older Loki versions (e.g. 2.6.x) fail Grafana datasource health checks due to query endpoint behavior.  
+Upgrading to 2.9.8 resolves compatibility issues.
+
+---
+
+### Verify Deployment
+
+Check pods:
+
+```bash
+kubectl get pods -n logging
+```
+
+Expected:
+
+```
+loki-0                1/1 Running
+loki-promtail-xxxxx   1/1 Running
+```
+
+Verify Loki readiness from Grafana pod:
+
+```bash
+kubectl exec -n monitoring deploy/monitoring-grafana -- \
+curl http://loki.logging:3100/ready
+```
+
+Expected:
+
+```
+ready
+```
+
+---
+
+### Configure Loki in Grafana
+
+Add new data source:
+
+- **Type:** Loki  
+- **URL:** `http://loki.logging:3100`  
+- **Authentication:** None  
+
+After saving:
+
+```
+Data source successfully connected.
+```
+
+---
+
+### Example LogQL Queries
+
+All logs from application namespace:
+
+```logql
+{namespace="platform"}
+```
+
+Only rejected validations:
+
+```logql
+{namespace="platform"} |= "REJECTED"
+```
+
+Filter document-service pods:
+
+```logql
+{namespace="platform", pod=~"document-service.*"}
+```
+---
+
 ## Key outcomes
 
 - CI builds and publishes container images automatically
 - Git is the single source of truth for runtime configuration
 - Kubernetes state converges automatically via Argo CD
-- Application behavior is observable via metrics and dashboards
+- Application behavior is observable via metrics, logs, and dashboards
 
 ## Non-goals
 - No ingress or authentication
