@@ -56,16 +56,38 @@ Location: `helm/document-service/`
 ### CI
 - GitHub Actions workflow:
   - `.github/workflows/ci.yml`
-- Builds + pushes image to GHCR (tags typically include `latest` and a commit SHA)
 
-## CI verification
+The CI pipeline performs validation, security scanning, container build, and automated release updates.
+
+#### On Pull Request to `main`
+- Dependency installation
+- Dependency vulnerability scan (`pip-audit`)
+- Unit tests (`pytest`)
+- Python compile sanity check
+- Container image build
+- Container vulnerability scan (Trivy)
+
+This ensures code quality and image security before merge.
+
+#### On Push to `main`
+In addition to validation steps:
+
+- Image is pushed to GitHub Container Registry (GHCR)
+- Image is tagged with the commit SHA for traceability
+- `helm/document-service/values.yaml` is automatically updated with the new image tag
+- Changes are committed back to Git
+- Argo CD reconciles the cluster automatically
+
+This creates a fully automated GitOps release flow:
+
+`Git → CI → Container Registry → Git (Helm update) → Argo CD → Kubernetes`
+
+### CI Verification
 
 - GitHub → Actions: latest workflow run should be green
 - GitHub → Packages: container image published to GHCR
-
-Image tags typically include:
-- `latest`
-- commit SHA
+- Helm values updated automatically with the latest commit SHA
+- Argo CD application synced and healthy
 ---
 
 ## Service Behavior
