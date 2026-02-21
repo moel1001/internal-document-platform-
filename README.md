@@ -1,32 +1,31 @@
 # Internal Document Platform (Document Validation Service)
 ![CI](https://github.com/moel1001/internal-document-platform-/actions/workflows/ci.yml/badge.svg?branch=main)
 
-A cloud-native backend service deployed via **GitOps** (Argo CD) with **CI/CD** (GitHub Actions → GHCR) and full **observability** (Prometheus + Grafana).
+<p align="center">
+  <img src="app/static/idp.svg" alt="Internal Document Platform Logo" width="240"/>
+</p>
+
+A production-style internal document validation platform modeling enterprise invoicing workflows, deployed via GitOps (Argo CD) with CI/CD (GitHub Actions → GHCR) and full observability (Prometheus + Grafana).
 
 ---
-## Project scope
 
-This project is intentionally designed as a **local, reproducible platform setup**
-to demonstrate modern cloud-native practices (CI/CD, GitOps, observability)
-without relying on managed cloud services.
+## Project Scope
 
-It focuses on correctness, visibility, and automation rather than feature completeness.
+This repository implements a realistic, locally reproducible cloud-native platform that simulates an internal document validation service.
+
+It is designed to demonstrate production-grade practices such as:
+
+- Declarative GitOps deployments
+- Automated CI/CD pipelines
+- Metrics-driven observability
+- Centralized logging
+- Kubernetes-native packaging with Helm
+
+The focus is on operational correctness, visibility, and automation rather than business complexity.
 
 ## Architecture
 
 ![Architecture diagram](docs/diagrams/architecture.svg)
-
----
-
-## What this project demonstrates
-- Building a small, real backend service (FastAPI) with production-style endpoints
-- Containerization with Docker
-- Kubernetes deployment on a local cluster (**kind**)
-- Packaging and configuration with **Helm**
-- Image build/push automation with **GitHub Actions**
-- GitOps-based deployments with **Argo CD**
-- Metrics scraping with **Prometheus Operator** via **ServiceMonitor**
-- Dashboarding with **Grafana** (traffic + latency panels)
 
 ---
 ## Repository Structure
@@ -52,12 +51,21 @@ GitHub Actions workflow for validation, security scanning, build, and automated 
 **Local Access (`deploy/local/`)**  
 Optional local convenience layer for accessing platform UIs via friendly hostnames.
 
-For a detailed breakdown:
-→ docs/repository-structure.md
+---
+
+## Documentation
+
+- 🚀 [Local Development Guide](docs/local-development.md)
+- 📦 [Repository Structure](docs/repository-structure.md)
 
 ---
 
 ## Service Behavior
+
+This service models a simplified internal document validation workflow
+commonly found in enterprise invoicing systems. Documents such as invoices,
+delivery notes, and certificates must pass structural and metadata validation
+before being accepted into downstream systems.
 
 ### Validation Rules
 A request is **ACCEPTED** only if:
@@ -67,6 +75,24 @@ A request is **ACCEPTED** only if:
 - `source_system` is not empty
 
 Otherwise it is **REJECTED** with a `reason`.
+
+### Validation UI & Traffic Simulation
+
+A lightweight web interface is available at `/ui` for validation testing and traffic simulation.
+
+![Validation UI – Traffic Simulation](docs/screenshots/ui-traffic-simulation.png)
+
+The UI is designed for controlled validation testing and observability demonstrations. It allows:
+
+- Submitting single document validation requests
+- Generating valid or invalid example payloads
+- Viewing structured validation results in real time
+- Generating batch traffic for load and monitoring verification
+- Inspecting the equivalent curl command for API parity
+
+The load testing section enables reproducible traffic generation to validate Prometheus metrics, Grafana dashboards, and logging behavior without requiring external tools. 
+
+It is intentionally designed to support future extension toward more production-like traffic simulation (e.g., mixed valid/invalid ratios, burst patterns, sustained load), enabling controlled experiments on dashboard behavior and alerting thresholds.
 
 ### Metrics (Prometheus)
 Exposed on `/metrics` using `prometheus_client`:
@@ -84,24 +110,6 @@ To prevent label cardinality explosion:
 
 - Unknown or invalid document types are collapsed into `invalid`
 - Rejection reasons are mapped to stable, low-cardinality `reason_code` values
-
-### Validation UI & Traffic Simulation
-
-A lightweight web interface is available at `/ui` for validation testing and traffic simulation.
-
-The UI is designed for controlled validation testing and observability demonstrations. It allows:
-
-- Submitting single document validation requests
-- Generating valid or invalid example payloads
-- Viewing structured validation results in real time
-- Generating batch traffic for load and monitoring verification
-- Inspecting the equivalent curl command for API parity
-
-![Validation UI – Traffic Simulation](docs/screenshots/ui-traffic-simulation.png)
-
-The load testing section enables reproducible traffic generation to validate Prometheus metrics, Grafana dashboards, and logging behavior without requiring external tools. 
-
-It is intentionally designed to support future extension toward more production-like traffic simulation (e.g., mixed valid/invalid ratios, burst patterns, sustained load), enabling controlled experiments on dashboard behavior and alerting thresholds.
 
 ---
 ## Observability Dashboards
@@ -225,12 +233,12 @@ Application Pods (`platform` namespace)
 
 ---
 
-## Key outcomes
+## Key Outcomes
 
-- CI builds and publishes container images automatically
-- Git is the single source of truth for runtime configuration
-- Kubernetes state converges automatically via Argo CD
-- Application behavior is observable via metrics, logs, and dashboards
+- Fully automated CI pipeline builds, scans, and publishes container images
+- Git serves as the single source of truth for runtime configuration (GitOps)
+- Kubernetes state reconciles declaratively via Argo CD
+- Application behavior is transparently observable through metrics, logs, and dashboards
 
 ## Non-goals
 - No ingress or authentication
