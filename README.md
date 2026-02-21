@@ -28,8 +28,6 @@ It focuses on correctness, visibility, and automation rather than feature comple
 
 ![Architecture diagram](docs/diagrams/architecture.svg)
 
-→ See “Observability Dashboards” section below for live monitoring examples.
-
 ---
 ## What This Repo Contains
 
@@ -71,14 +69,19 @@ It focuses on correctness, visibility, and automation rather than feature comple
 ### GitOps
 
 - Argo CD Application manifest (example):
-
   - `argocd/document-service-app.yaml`
 
 ### CI
 
 - GitHub Actions workflow:
-
   - `.github/workflows/ci.yml`
+
+### Observability
+
+- Exported Grafana dashboards stored as JSON for reproducibility
+
+  - `docs/dashboards/document-validation-service-observability.json`
+  - `docs/dashboards/Latency.json`
 ---
 
 ## Service Behavior
@@ -127,6 +130,46 @@ The load testing section enables reproducible traffic generation to validate Pro
 
 It is intentionally designed to support future extension toward more production-like traffic simulation (e.g., mixed valid/invalid ratios, burst patterns, sustained load), enabling controlled experiments on dashboard behavior and alerting thresholds.
 
+---
+## Observability Dashboards
+
+The platform includes operational dashboards designed for production-style monitoring and incident analysis.
+
+### Document Service – Observability
+
+Tracks:
+- Request rate (req/s)
+- Rejection rate (%)
+- Accepted vs Rejected trends
+- Failure reason distribution
+- Traffic distribution by document type
+
+![Observability Dashboard](docs/screenshots/Grafana_Dashboard_Observability.png)
+
+---
+
+### Latency & Performance
+
+Tracks:
+- P50 / P95 / P99 latency
+- Latency by result (ACCEPTED vs REJECTED)
+- Latency by document type
+
+![Latency Dashboard](docs/screenshots/Grafana_Dashboard_Latency.png)
+
+---
+
+These dashboards are based on the metrics exposed in the application:
+
+- `document_validation_requests_total`
+- `document_validation_failures_total`
+- `document_validation_request_latency_seconds`
+
+The dashboards focus on:
+- Detecting quality degradation
+- Identifying document-type-specific issues
+- Performance regression detection
+- Incident triage support
 ---
 
 ## CI/CD & GitOps Automation
@@ -433,46 +476,6 @@ user: admin
 password: (from command above)
 
 ---
-
-## Observability Dashboards
-
-The platform includes operational dashboards designed for production-style monitoring and incident analysis.
-
-### Document Service – Observability
-
-Tracks:
-- Request rate (req/s)
-- Rejection rate (%)
-- Accepted vs Rejected trends
-- Failure reason distribution
-- Traffic distribution by document type
-
-![Observability Dashboard](docs/screenshots/Grafana_Dashboard_Observability.png)
-
----
-
-### Latency & Performance
-
-Tracks:
-- P50 / P95 / P99 latency
-- Latency by result (ACCEPTED vs REJECTED)
-- Latency by document type
-
-![Latency Dashboard](docs/screenshots/Grafana_Dashboard_Latency.png)
-
----
-
-These dashboards are based on the metrics exposed in the application:
-
-- `document_validation_requests_total`
-- `document_validation_failures_total`
-- `document_validation_request_latency_seconds`
-
-The dashboards focus on:
-- Detecting quality degradation
-- Identifying document-type-specific issues
-- Performance regression detection
-- Incident triage support
 
 ## Centralized Logging: Loki + Promtail
 
