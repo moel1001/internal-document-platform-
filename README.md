@@ -76,6 +76,28 @@ It focuses on correctness, visibility, and automation rather than feature comple
 - GitHub Actions workflow:
   - `.github/workflows/ci.yml`
 
+### Local Access Layer (kind)
+
+- Enables friendly local hostnames without manual `kubectl port-forward`
+
+  - Location: `deploy/local/`
+
+    - `bootstrap.sh` / `teardown.sh` — main setup and cleanup scripts
+    - `ingress-local.yaml` — local Ingress definitions
+    - `nginx-proxy.conf.tpl` — reverse proxy template
+    - `scripts/` — proxy and certificate helpers
+
+  - Hostnames:
+
+    - `grafana.local`
+    - `prometheus.local`
+    - `argocd.local`
+    - `document-service.local`
+    
+  - Documentation:
+
+    - `deploy/local/README.md` — full setup instructions and troubleshooting
+
 ### Observability
 
 - Exported Grafana dashboards stored as JSON for reproducibility
