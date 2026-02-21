@@ -35,11 +35,23 @@ It focuses on correctness, visibility, and automation rather than feature comple
 
 ### Application
 - **FastAPI service** (document validation)
-- Endpoints:
-  - `POST /validate` — validates payload and returns `ACCEPTED` or `REJECTED`
-  - `GET /metrics` — Prometheus metrics
-  - `GET /health/live` — liveness probe
-  - `GET /health/ready` — readiness probe
+
+Location: `app/`
+
+- `app/main.py` — FastAPI application (validation logic + metrics instrumentation)
+- `app/ui.html` — validation and traffic simulation interface
+- `app/static/` — UI assets (CSS/JS/logo)
+- `app/requirements.txt` — Python dependencies
+- `app/__init__.py` — application module initialization
+- `test_validation.py` — unit tests (pytest)
+
+Exposed endpoints:
+
+- `POST /validate` — validates payload and returns `ACCEPTED` or `REJECTED`
+- `GET /metrics` — Prometheus metrics endpoint
+- `GET /health/live` — liveness probe
+- `GET /health/ready` — readiness probe
+- `GET /ui` — validation UI
 
 ### Helm Chart
 Location: `helm/document-service/`
@@ -57,6 +69,55 @@ Location: `helm/document-service/`
 - GitHub Actions workflow:
   - `.github/workflows/ci.yml`
 ---
+
+## Service Behavior
+
+### Validation Rules
+A request is **ACCEPTED** only if:
+- `document_id` is not empty
+- `document_type` is one of: `invoice`, `delivery_note`, `certificate`
+- `created_at` matches `YYYY-MM-DD`
+- `source_system` is not empty
+
+Otherwise it is **REJECTED** with a `reason`.
+
+### Metrics (Prometheus)
+Exposed on `/metrics` using `prometheus_client`:
+
+- document_validation_requests_total (Counter)  
+  Labels: `result`, `document_type`
+
+- document_validation_failures_total (Counter)  
+  Labels: `reason_code`, `document_type`
+
+- document_validation_request_latency_seconds (Histogram)  
+  Labels: `result`, `document_type`
+
+To prevent label cardinality explosion:
+
+- Unknown or invalid document types are collapsed into `invalid`
+- Rejection reasons are mapped to stable, low-cardinality `reason_code` values
+
+### Validation UI & Traffic Simulation
+
+A lightweight web interface is available at `/ui` for validation testing and traffic simulation.
+
+The UI is designed for controlled validation testing and observability demonstrations. It allows:
+
+- Submitting single document validation requests
+- Generating valid or invalid example payloads
+- Viewing structured validation results in real time
+- Generating batch traffic for load and monitoring verification
+- Inspecting the equivalent curl command for API parity
+
+![Validation UI – Traffic Simulation](docs/screenshots/ui-traffic-simulation.png)
+
+The load testing section enables reproducible traffic generation to validate Prometheus metrics, Grafana dashboards, and logging behavior without requiring external tools. 
+
+It is intentionally designed to support future extension toward more production-like traffic simulation (e.g., mixed valid/invalid ratios, burst patterns, sustained load), enabling controlled experiments on dashboard behavior and alerting thresholds.
+
+---
+
 ## CI/CD & GitOps Automation
 
 This project uses GitHub Actions for CI and Argo CD for GitOps-based deployment.
@@ -111,25 +172,6 @@ After pushing to `main`:
 - The cluster reached `Healthy` and `Synced` state
 
 ![Argo CD – CI Triggered Sync](docs/screenshots/argocd-ci-triggered-sync.png)
-
----
-## Service Behavior
-
-### Validation Rules
-A request is **ACCEPTED** only if:
-- `document_id` is not empty
-- `document_type` is one of: `invoice`, `delivery_note`, `certificate`
-- `created_at` matches `YYYY-MM-DD`
-- `source_system` is not empty
-
-Otherwise it is **REJECTED** with a `reason`.
-
-### Metrics (Prometheus)
-Exposed on `/metrics` using `prometheus_client`:
-
-- `document_validation_requests_total` (Counter)  
-- `document_validation_failures_total` (Counter)  
-- `document_validation_request_latency_seconds` (Histogram)
 
 ---
 
