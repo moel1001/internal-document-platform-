@@ -38,28 +38,28 @@ It focuses on correctness, visibility, and automation rather than feature comple
 
 Location: `app/`
 
-- `app/main.py` — FastAPI application (validation logic + metrics instrumentation)
-- `app/ui.html` — validation and traffic simulation interface
-- `app/static/` — UI assets (CSS/JS/logo)
-- `app/requirements.txt` — Python dependencies
-- `app/__init__.py` — application module initialization
-- `test_validation.py` — unit tests (pytest)
+  - `app/main.py` — FastAPI application (validation logic + metrics instrumentation)
+  - `app/ui.html` — validation and traffic simulation interface
+  - `app/static/` — UI assets (CSS/JS/logo)
+  - `app/requirements.txt` — Python dependencies
+  - `app/__init__.py` — application module initialization
+  - `test_validation.py` — unit tests (pytest)
 
 Exposed endpoints:
 
-- `POST /validate` — validates payload and returns `ACCEPTED` or `REJECTED`
-- `GET /metrics` — Prometheus metrics endpoint
-- `GET /health/live` — liveness probe
-- `GET /health/ready` — readiness probe
-- `GET /ui` — validation UI
+  - `POST /validate` — validates payload and returns `ACCEPTED` or `REJECTED`
+  - `GET /metrics` — Prometheus metrics endpoint
+  - `GET /health/live` — liveness probe
+  - `GET /health/ready` — readiness probe
+  - `GET /ui` — validation UI
 
 ### Helm Chart
 Location: `helm/document-service/`
 
-- `templates/deployment.yaml` — Deployment with probes + resources
-- `templates/service.yaml` — ClusterIP service
-- `templates/servicemonitor.yaml` — Prometheus Operator scraping config (ServiceMonitor)
-- `values.yaml` — image + replicaCount + resources
+  - `templates/deployment.yaml` — Deployment with probes + resources
+  - `templates/service.yaml` — ClusterIP service
+  - `templates/servicemonitor.yaml` — Prometheus Operator scraping config (ServiceMonitor)
+  - `values.yaml` — image + replicaCount + resources
 
 ### GitOps
 - Argo CD Application manifest (example):
