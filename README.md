@@ -56,40 +56,63 @@ Location: `helm/document-service/`
 ### CI
 - GitHub Actions workflow:
   - `.github/workflows/ci.yml`
+---
+## CI/CD & GitOps Automation
 
-The CI pipeline performs validation, security scanning, container build, and automated release updates.
+This project uses GitHub Actions for CI and Argo CD for GitOps-based deployment.
+Git is the single source of truth for the runtime state.
 
-#### On Pull Request to `main`
+### Pull Request Workflow (Validation)
+
+On pull requests to `main`, the pipeline performs:
+
 - Dependency installation
-- Dependency vulnerability scan (`pip-audit`)
+- Dependency vulnerability scanning (`pip-audit`)
 - Unit tests (`pytest`)
 - Python compile sanity check
 - Container image build
-- Container vulnerability scan (Trivy)
+- Container image vulnerability scan (Trivy)
 
-This ensures code quality and image security before merge.
+No image is pushed and no deployment is triggered.
 
-#### On Push to `main`
-In addition to validation steps:
+This ensures code quality and security before merge.
 
-- Image is pushed to GitHub Container Registry (GHCR)
-- Image is tagged with the commit SHA for traceability
-- `helm/document-service/values.yaml` is automatically updated with the new image tag
-- Changes are committed back to Git
-- Argo CD reconciles the cluster automatically
+---
+
+### Push to `main` (Automated Release)
+
+On push to `main`, in addition to validation steps:
+
+1. The container image is built
+2. The image is pushed to GitHub Container Registry (GHCR)
+3. The image is tagged using the commit SHA (no `latest` tag)
+4. `helm/document-service/values.yaml` is automatically updated with the new SHA
+5. The updated Helm values are committed back to Git
+6. Argo CD detects the declarative state change
+7. Kubernetes reconciles automatically
 
 This creates a fully automated GitOps release flow:
 
 `Git → CI → Container Registry → Git (Helm update) → Argo CD → Kubernetes`
 
-### CI Verification
+No manual image updates or imperative `kubectl apply` commands are required.
 
-- GitHub → Actions: latest workflow run should be green
-- GitHub → Packages: container image published to GHCR
-- Helm values updated automatically with the latest commit SHA
-- Argo CD application synced and healthy
 ---
 
+### Example: Automated Reconciliation in Argo CD
+
+The screenshot below shows the result of a CI-triggered release.
+
+After pushing to `main`:
+
+- CI updated the image tag in `values.yaml`
+- The change was committed by `github-actions`
+- Argo CD synchronized the application
+- The cluster reached `Healthy` and `Synced` state
+
+![Argo CD – CI Triggered Sync](docs/screenshots/argocd-ci-triggered-sync.png)
+
+---
 ## Service Behavior
 
 ### Validation Rules
