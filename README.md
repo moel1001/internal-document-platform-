@@ -229,6 +229,29 @@ After pushing to `main`:
 
 ---
 
+## Centralized Logging: Loki + Promtail
+
+The project initially focused on metrics based observability using Prometheus and Grafana.  
+To complete the observability stack, centralized logging was later added using **Loki** and **Promtail**.
+
+While metrics show what is happening such as traffic and latency, logs explain why it happens, for example why a validation was rejected or whether errors correlate with latency spikes.
+
+---
+
+### Logging Architecture
+
+Application Pods (`platform` namespace)  
+→ Promtail (`logging` namespace)  
+→ Loki (filesystem storage)  
+→ Grafana (`monitoring` namespace)
+
+- Promtail tails Kubernetes container logs automatically
+- Loki stores logs locally (filesystem mode)
+- Grafana queries Loki via Kubernetes DNS (`loki.logging`)
+- No external storage or cloud services are used
+
+---
+
 ## Quickstart (5 minutes)
 
 ### Prerequisites
@@ -474,29 +497,6 @@ Login:
 
 user: admin
 password: (from command above)
-
----
-
-## Centralized Logging: Loki + Promtail
-
-The project initially focused on metrics based observability using Prometheus and Grafana.  
-To complete the observability stack, centralized logging was later added using **Loki** and **Promtail**.
-
-While metrics show what is happening such as traffic and latency, logs explain why it happens, for example why a validation was rejected or whether errors correlate with latency spikes.
-
----
-
-### Logging Architecture
-
-Application Pods (`platform` namespace)  
-→ Promtail (`logging` namespace)  
-→ Loki (filesystem storage)  
-→ Grafana (`monitoring` namespace)
-
-- Promtail tails Kubernetes container logs automatically
-- Loki stores logs locally (filesystem mode)
-- Grafana queries Loki via Kubernetes DNS (`loki.logging`)
-- No external storage or cloud services are used
 
 ---
 
