@@ -19,12 +19,14 @@ jobs:
       # pull repo code into the VM
       - name: Checkout
         uses: actions/checkout@v4
-
-      # install python
+      
+      # install Python and enable pip dependency caching to speed up CI run
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: app/requirements.txt
 
       # install dependencies from requirements.txt
       - name: Install deps
