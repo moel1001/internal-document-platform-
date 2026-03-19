@@ -52,7 +52,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # build images using Dockerfile and push to GHCR
+      # build container image from Dockerfile
       - name: Build image
         uses: docker/build-push-action@v6
         with:
@@ -82,7 +82,19 @@ jobs:
         run: |
           sed -i "s/^  tag: .*/  tag: \"${{ github.sha }}\"/" helm/document-service/values.yaml
 
+      - name: Set up Helm
+        if: github.event_name == 'push'
+        uses: azure/setup-helm@v4
 
+      - name: Validate Helm chart
+        if: github.event_name == 'push'
+        run: |
+          helm lint helm/document-service
+          helm template helm/document-service > /dev/null
+
+      - name: Commit and push updated Helm values
+        if: github.event_name == 'push'
+        run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
