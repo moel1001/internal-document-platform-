@@ -8,4 +8,3 @@ loki:
 
 promtail:
   enabled: true # Promtail runs as a DaemonSet to collect logs from all nodes
-
