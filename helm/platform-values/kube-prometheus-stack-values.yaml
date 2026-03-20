@@ -1,3 +1,5 @@
+# monitoring stack values managed via Argo CD
+
 grafana:
   adminPassword: "LocalGrafana123!"   #fixed password to avoid random secret regeneration on each render
 
