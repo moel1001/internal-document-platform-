@@ -2,7 +2,7 @@ replicaCount: 2
 
 image:
   repository: ghcr.io/moel1001/document-service
-  tag: "454d14de2984893e5c33be7aaf74a0f502fa1c57"
+  tag: "d20705606d3fb872f6a8880149f6d11e6d48530f"
   pullPolicy: IfNotPresent
 
 service:
