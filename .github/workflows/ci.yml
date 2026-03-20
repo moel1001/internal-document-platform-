@@ -9,6 +9,7 @@ on:
       - "app/**"
       - "tests/**"
       - "helm/**"
+      - "argocd/**"
       - "Dockerfile"
   pull_request:
     branches: ["main"]
@@ -17,6 +18,7 @@ on:
       - "app/**"
       - "tests/**"
       - "helm/**"
+      - "argocd/**"
       - "Dockerfile"
 
 permissions:
