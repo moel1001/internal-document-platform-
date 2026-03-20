@@ -1,0 +1,11 @@
+grafana:
+  enabled: false # Grafana is already provided by kube-prometheus-stack
+loki:
+  image:
+    tag: 2.9.8
+  persistence:
+    enabled: false # disabled because the plattform runs on a local kind cluster
+
+promtail:
+  enabled: true # Promtail runs as a DaemonSet to collect logs from all nodes
+
