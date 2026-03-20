@@ -1,0 +1,2 @@
+grafana:
+  adminPassword: "LocalGrafana123!"   #fixed password to avoid random secret regeneration on each render

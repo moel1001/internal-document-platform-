@@ -6,10 +6,17 @@ metadata:
 spec:
   project: default
 
-  source:
-    repoURL: https://prometheus-community.github.io/helm-charts
-    chart: kube-prometheus-stack
-    targetRevision: 80.14.4
+  sources:
+    - repoURL: https://prometheus-community.github.io/helm-charts
+      chart: kube-prometheus-stack
+      targetRevision: 80.14.4
+      helm:
+        valueFiles:
+          - $values/helm/platform-values/kube-prometheus-stack-values.yaml
+
+    - repoURL: https://github.com/moel1001/internal-document-platform-.git
+      targetRevision: main
+      ref: values
 
   destination:
     server: https://kubernetes.default.svc
