@@ -27,6 +27,10 @@ The focus is on operational correctness, visibility, and automation rather than 
 
 ![Architecture diagram](docs/diagrams/architecture.svg)
 
+## CI/CD Pipeline
+
+![CICD Pipeline](docs/diagrams/pipeline.svg)
+
 ---
 ## Repository Structure
 
