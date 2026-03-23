@@ -138,7 +138,7 @@ To prevent label cardinality explosion:
 
 The platform includes Grafana dashboards for monitoring service behavior, traffic patterns, validation failures, and latency.
 
-All dashboards are versioned in this repository under the [`/observability`](observability/) directory as JSON exports.
+All dashboards are versioned in this repository under the [`/dashboards`](observability/grafana/dashboards/) directory as JSON exports.
 
 ### Document Service – Observability
 
