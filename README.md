@@ -3,7 +3,7 @@
   <img src="app/static/idp.svg" alt="Internal Document Platform Logo" width="240"/>
 </p>
 
-A production-style internal document validation platform modeling enterprise invoicing workflows, deployed via GitOps (Argo CD) with CI/CD (GitHub Actions → GHCR) and full observability (Prometheus + Grafana).
+A production-style internal document validation platform modeling enterprise invoicing workflows, deployed via GitOps (Argo CD) with CI/CD (GitHub Actions → GHCR) and full observability (Prometheus + Grafana, and Loki).
 
 ## CI/CD Pipeline
 
