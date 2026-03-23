@@ -175,6 +175,24 @@ The dashboards focus on:
 - Identifying document-type-specific issues
 - Performance regression detection
 - Incident triage support
+
+---
+
+## Centralized Logging: Loki + Promtail
+
+In addition to metrics-based observability, the platform includes centralized logging using **Loki** and **Promtail**.
+
+Metrics reveal service behavior such as request rate and latency, while logs provide detailed context for debugging validation failures and operational issues.
+
+---
+
+### Logging Architecture
+
+- Promtail tails Kubernetes container logs automatically
+- Loki stores logs locally (filesystem mode)
+- Grafana queries Loki via Kubernetes DNS (`loki.logging`)
+- No external storage or cloud services are used
+
 ---
 
 ## CI/CD & GitOps Automation
@@ -248,22 +266,6 @@ The platform is composed of multiple Argo CD applications managed through GitOps
 #### Monitoring Stack
 
 ![ArgoCD Monitoring](docs/screenshots/argocd-monitoring.png)
----
-
-## Centralized Logging: Loki + Promtail
-
-In addition to metrics-based observability, the platform includes centralized logging using **Loki** and **Promtail**.
-
-Metrics reveal service behavior such as request rate and latency, while logs provide detailed context for debugging validation failures and operational issues.
-
----
-
-### Logging Architecture
-
-- Promtail tails Kubernetes container logs automatically
-- Loki stores logs locally (filesystem mode)
-- Grafana queries Loki via Kubernetes DNS (`loki.logging`)
-- No external storage or cloud services are used
 
 ---
 
