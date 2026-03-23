@@ -1,27 +1,49 @@
 # Internal Document Platform (Document Validation Service)
-![CI](https://github.com/moel1001/internal-document-platform-/actions/workflows/ci.yml/badge.svg?branch=main)
-
 <p align="center">
   <img src="app/static/idp.svg" alt="Internal Document Platform Logo" width="240"/>
 </p>
 
-A production-style internal document validation platform modeling enterprise invoicing workflows, deployed via GitOps (Argo CD) with CI/CD (GitHub Actions → GHCR) and full observability (Prometheus + Grafana).
+A production-style internal document validation platform modeling enterprise invoicing workflows, deployed via GitOps (Argo CD) with CI/CD (GitHub Actions → GHCR) and full observability (Prometheus + Grafana, and Loki).
+
+## CI/CD Pipeline
+
+<p align="center">
+  <img src="https://img.shields.io/github/actions/workflow/status/moel1001/internal-document-platform-/ci.yml?branch=main&style=for-the-badge&logo=githubactions&logoColor=white"/>
+  <img src="https://img.shields.io/github/license/moel1001/internal-document-platform-?style=for-the-badge"/>
+  <img src="https://img.shields.io/github/last-commit/moel1001/internal-document-platform-?style=for-the-badge&logo=git&logoColor=white"/>
+  <img src="https://img.shields.io/github/v/release/moel1001/internal-document-platform-?style=for-the-badge&logo=github"/>
+</p>
+
+![CICD Pipeline](docs/diagrams/pipeline.svg)
+
+
+<p align="center">
+<img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white"/>
+<img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white"/>
+<img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white"/>
+<img src="https://img.shields.io/badge/Kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white"/>
+<img src="https://img.shields.io/badge/Helm-0F1689?style=for-the-badge&logo=helm&logoColor=white"/>
+<img src="https://img.shields.io/badge/ArgoCD-EF7B4D?style=for-the-badge&logo=argo&logoColor=white"/>
+</p>
+
+<p align="center">
+<img src="https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=prometheus&logoColor=white"/>
+<img src="https://img.shields.io/badge/Grafana-F46800?style=for-the-badge&logo=grafana&logoColor=white"/>
+<img src="https://img.shields.io/badge/Loki-000000?style=for-the-badge&logo=grafana&logoColor=white"/>
+</p>
 
 ---
 
 ## Project Scope
 
-This repository implements a realistic, locally reproducible cloud-native platform that simulates an internal document validation service.
+This repository implements a locally reproducible cloud-native platform simulating an internal document validation service used in enterprise invoicing workflows.
 
-It is designed to demonstrate production-grade practices such as:
+The project focuses on operational practices rather than business complexity, including:
 
-- Declarative GitOps deployments
-- Automated CI/CD pipelines
-- Metrics-driven observability
-- Centralized logging
-- Kubernetes-native packaging with Helm
-
-The focus is on operational correctness, visibility, and automation rather than business complexity.
+- GitOps-based Kubernetes deployments with Argo CD
+- Automated CI/CD pipelines with GitHub Actions
+- Metrics and logging for operational visibility
+- Kubernetes-native packaging using Helm
 
 ## Architecture
 
@@ -114,7 +136,9 @@ To prevent label cardinality explosion:
 ---
 ## Observability Dashboards
 
-The platform includes operational dashboards designed for production-style monitoring and incident analysis.
+The platform includes Grafana dashboards for monitoring service behavior, traffic patterns, validation failures, and latency.
+
+All dashboards are versioned in this repository under the [`/dashboards`](observability/grafana/dashboards/) directory as JSON exports.
 
 ### Document Service – Observability
 
@@ -151,16 +175,35 @@ The dashboards focus on:
 - Identifying document-type-specific issues
 - Performance regression detection
 - Incident triage support
+
+---
+
+## Centralized Logging: Loki + Promtail
+
+In addition to metrics-based observability, the platform includes centralized logging using **Loki** and **Promtail**.
+
+Metrics reveal service behavior such as request rate and latency, while logs provide detailed context for debugging validation failures and operational issues.
+
+---
+
+### Logging Architecture
+
+- Promtail tails Kubernetes container logs automatically
+- Loki stores logs locally (filesystem mode)
+- Grafana queries Loki via Kubernetes DNS (`loki.logging`)
+- No external storage or cloud services are used
+
 ---
 
 ## CI/CD & GitOps Automation
 
-This project uses GitHub Actions for CI and Argo CD for GitOps-based deployment.
-Git is the single source of truth for the runtime state.
+This project uses  GitHub Actions for CI and Argo CD for GitOps-based deployments. Git is the single source of truth for the desired runtime state.
+
+---
 
 ### Pull Request Workflow (Validation)
 
-On pull requests to `main`, the pipeline performs:
+On pull requests to `main`, the pipeline performs validation steps only
 
 - Dependency installation
 - Dependency vulnerability scanning (`pip-audit`)
@@ -171,65 +214,58 @@ On pull requests to `main`, the pipeline performs:
 
 No image is pushed and no deployment is triggered.
 
-This ensures code quality and security before merge.
-
 ---
 
 ### Push to `main` (Automated Release)
 
-On push to `main`, in addition to validation steps:
+When changes are merged into `main`, the CI pipeline performs the release process:
 
-1. The container image is built
-2. The image is pushed to GitHub Container Registry (GHCR)
-3. The image is tagged using the commit SHA (no `latest` tag)
-4. `helm/document-service/values.yaml` is automatically updated with the new SHA
-5. The updated Helm values are committed back to Git
-6. Argo CD detects the declarative state change
-7. Kubernetes reconciles automatically
+1. Build the container image
+2. Push the image to GitHub Container Registry (GHCR)
+3. Tag the image with the commit SHA
+4. Update `helm/document-service/values.yaml` with the new image tag
+5. Commit the updated Helm values back to Git
+
+Argo CD detects this change in the repository and synchronizes the cluster automatically.
 
 This creates a fully automated GitOps release flow:
-
-`Git → CI → Container Registry → Git (Helm update) → Argo CD → Kubernetes`
 
 No manual image updates or imperative `kubectl apply` commands are required.
 
 ---
 
-### Example: Automated Reconciliation in Argo CD
+### GitOps Reconciliation with Argo CD
 
-The screenshot below shows the result of a CI-triggered release.
+Argo CD continuously reconciles the Kubernetes cluster with the declarative configuration stored in this repository.
 
-After pushing to `main`:
+The platform defines multiple Argo CD applications in the `argocd/` directory:
 
-- CI updated the image tag in `values.yaml`
-- The change was committed by `github-actions`
-- Argo CD synchronized the application
-- The cluster reached `Healthy` and `Synced` state
+- `document-service` – the validation service deployed from the internal Helm chart
+- `monitoring` – the observability stack (Prometheus, Grafana, Alertmanager)
+- `loki` – the logging stack (Loki + Promtail)
 
-![Argo CD – CI Triggered Sync](docs/screenshots/argocd-ci-triggered-sync.png)
+Each application is defined as an Argo CD Application resource referencing a Helm chart and configuration values stored in the repository.
 
----
+Argo CD monitors these definitions and ensures that the cluster state matches the declared configuration.  
+If drift occurs, the controller automatically reconciles the cluster back to the desired state.
 
-## Centralized Logging: Loki + Promtail
+The screenshots below show the applications after synchronization, reaching the **Healthy** and **Synced** state.
 
-The project initially focused on metrics based observability using Prometheus and Grafana.  
-To complete the observability stack, centralized logging was later added using **Loki** and **Promtail**.
+### Argo CD Applications
 
-While metrics show what is happening such as traffic and latency, logs explain why it happens, for example why a validation was rejected or whether errors correlate with latency spikes.
+The platform is composed of multiple Argo CD applications managed through GitOps.
 
----
+#### Document Service
 
-### Logging Architecture
+![ArgoCD Document Service](docs/screenshots/argocd-document-service.png)
 
-Application Pods (`platform` namespace)  
-→ Promtail (`logging` namespace)  
-→ Loki (filesystem storage)  
-→ Grafana (`monitoring` namespace)
+#### Logging Stack (Loki)
 
-- Promtail tails Kubernetes container logs automatically
-- Loki stores logs locally (filesystem mode)
-- Grafana queries Loki via Kubernetes DNS (`loki.logging`)
-- No external storage or cloud services are used
+![ArgoCD Loki](docs/screenshots/argocd-loki.png)
+
+#### Monitoring Stack
+
+![ArgoCD Monitoring](docs/screenshots/argocd-monitoring.png)
 
 ---
 

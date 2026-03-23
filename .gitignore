@@ -7,4 +7,6 @@ __pycache__/
 deploy/local/certs/
 deploy/local/.runtime/
 .pytest_cache/
+docs/diagrams/.$architecture.drawio.bkp
+
 
