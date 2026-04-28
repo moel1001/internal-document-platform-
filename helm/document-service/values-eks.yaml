@@ -12,3 +12,6 @@ ingress:
         - path: /
           pathType: Prefix
   tls: []
+
+serviceMonitor:
+  enabled: false
