@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: aws-load-balancer-controller-eks
+  namespace: argocd
+spec:
+  project: default
+
+  sources:
+    - repoURL: https://aws.github.io/eks-charts
+      chart: aws-load-balancer-controller
+      targetRevision: 1.14.0
+      helm:
+        valueFiles:
+          - $values/helm/platform-values/aws-load-balancer-controller-values-eks.yaml
+        values: |
+          serviceAccount:
+            annotations:
+              eks.amazonaws.com/role-arn: "__AWS_LBC_ROLE_ARN__"
+
+    - repoURL: https://github.com/moel1001/internal-document-platform-.git
+      targetRevision: main
+      ref: values
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

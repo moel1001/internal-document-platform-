@@ -1,0 +1,8 @@
+# Values for managing AWS Load Balancer Controller through Argo CD in EKS.
+# Terraform owns the AWS IAM role. Argo CD owns the controller chart.
+
+clusterName: idp-eks
+
+serviceAccount:
+  create: true
+  name: aws-load-balancer-controller
