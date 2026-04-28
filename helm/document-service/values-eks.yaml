@@ -9,8 +9,7 @@ ingress:
     alb.ingress.kubernetes.io/healthcheck-path: /health/ready
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
   hosts:
-    - host: document-service.example.com
-      paths:
+    - paths:
         - path: /
           pathType: Prefix
   tls: []
