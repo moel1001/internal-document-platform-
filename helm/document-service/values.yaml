@@ -17,6 +17,8 @@ ingress:
 
 serviceMonitor:
   enabled: true
+  labels:
+    release: monitoring
 
 resources:
   requests:

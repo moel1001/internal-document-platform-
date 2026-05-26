@@ -15,4 +15,6 @@ ingress:
   tls: []
 
 serviceMonitor:
-  enabled: false
+  enabled: true
+  labels:
+    release: monitoring-eks
