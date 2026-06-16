@@ -9,4 +9,29 @@ deploy/local/.runtime/
 .pytest_cache/
 docs/diagrams/.$architecture.drawio.bkp
 
-
+# Terraform
+.terraform/
+**/.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.tfstate.lock.info
+**/.terraform.tfstate.lock.info
+*.tfplan
+*.plan
+*.tfvars.local
+*.tfvars.backup
+*.tfbackend
+terraform.tfstate.d/
+**/terraform.tfstate.d/
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+terraform.tfvars
+terraform.tfvars.json
+*.auto.tfvars
+*.auto.tfvars.json
+.terraformrc
+terraform.rc
