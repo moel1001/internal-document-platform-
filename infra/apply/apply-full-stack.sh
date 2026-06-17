@@ -34,6 +34,11 @@ VERIFY_HTTP_ENDPOINTS="${VERIFY_HTTP_ENDPOINTS:-1}"
 HTTP_CONNECT_TIMEOUT_SECONDS="${HTTP_CONNECT_TIMEOUT_SECONDS:-5}"
 HTTP_TIMEOUT_SECONDS="${HTTP_TIMEOUT_SECONDS:-15}"
 ARGOCD_NAMESPACE="${ARGOCD_NAMESPACE:-argocd}"
+AWS_LBC_NAMESPACE="${AWS_LBC_NAMESPACE:-kube-system}"
+AWS_LBC_SELECTOR="${AWS_LBC_SELECTOR:-app.kubernetes.io/name=aws-load-balancer-controller}"
+AWS_LBC_WEBHOOK_NAME="${AWS_LBC_WEBHOOK_NAME:-aws-load-balancer-webhook}"
+AWS_LBC_WEBHOOK_TLS_SECRET="${AWS_LBC_WEBHOOK_TLS_SECRET:-aws-load-balancer-tls}"
+REFRESH_ALB_WEBHOOK_TLS="${REFRESH_ALB_WEBHOOK_TLS:-1}"
 
 require_command aws kubectl curl
 
@@ -125,30 +130,86 @@ wait_for_expected_argocd_applications() {
   wait_for_argocd_application document-service-eks
 }
 
+get_aws_load_balancer_controller_deployment() {
+  kubectl get deployment \
+    -n "$AWS_LBC_NAMESPACE" \
+    -l "$AWS_LBC_SELECTOR" \
+    -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true
+}
+
 # Discover the controller by label because Helm-generated deployment names can
 # vary between releases.
 wait_for_aws_load_balancer_controller() {
-  local namespace="kube-system"
-  local selector="app.kubernetes.io/name=aws-load-balancer-controller"
   local waited=0
   local deployment_name=""
 
   until [[ -n "$deployment_name" ]]; do
-    deployment_name="$(kubectl get deployment -n "$namespace" -l "$selector" -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)"
+    deployment_name="$(get_aws_load_balancer_controller_deployment)"
 
     if [[ -n "$deployment_name" ]]; then
-      kubectl rollout status "deployment/$deployment_name" -n "$namespace" --timeout="$ROLLOUT_TIMEOUT"
+      kubectl rollout status "deployment/$deployment_name" -n "$AWS_LBC_NAMESPACE" --timeout="$ROLLOUT_TIMEOUT"
       return 0
     fi
 
     if (( waited >= WAIT_TIMEOUT_SECONDS )); then
-      echo "Timed out waiting for AWS Load Balancer Controller deployment in namespace $namespace"
+      echo "Timed out waiting for AWS Load Balancer Controller deployment in namespace $AWS_LBC_NAMESPACE"
       exit 1
     fi
 
     sleep "$POLL_SECONDS"
     waited=$((waited + POLL_SECONDS))
   done
+}
+
+# The Helm chart generates the webhook secret and injects its CA into the
+# admission webhook configurations. Wait until Argo CD has reconciled both sides
+# before the API server needs the webhook to validate Ingress resources.
+wait_for_aws_load_balancer_webhook_tls() {
+  local waited=0
+  local secret_ca=""
+  local mutating_ca=""
+  local validating_ca=""
+
+  until [[ -n "$secret_ca" && "$mutating_ca" == "$secret_ca" && "$validating_ca" == "$secret_ca" ]]; do
+    secret_ca="$(kubectl get secret "$AWS_LBC_WEBHOOK_TLS_SECRET" \
+      -n "$AWS_LBC_NAMESPACE" \
+      -o jsonpath='{.data.ca\.crt}' 2>/dev/null || true)"
+    mutating_ca="$(kubectl get mutatingwebhookconfiguration "$AWS_LBC_WEBHOOK_NAME" \
+      -o jsonpath='{.webhooks[0].clientConfig.caBundle}' 2>/dev/null || true)"
+    validating_ca="$(kubectl get validatingwebhookconfiguration "$AWS_LBC_WEBHOOK_NAME" \
+      -o jsonpath='{.webhooks[?(@.name=="vingress.elbv2.k8s.aws")].clientConfig.caBundle}' 2>/dev/null || true)"
+
+    if [[ -n "$secret_ca" && "$mutating_ca" == "$secret_ca" && "$validating_ca" == "$secret_ca" ]]; then
+      return 0
+    fi
+
+    if (( waited >= WAIT_TIMEOUT_SECONDS )); then
+      echo "Timed out waiting for AWS Load Balancer Controller webhook TLS to match secret/$AWS_LBC_WEBHOOK_TLS_SECRET" >&2
+      kubectl get secret "$AWS_LBC_WEBHOOK_TLS_SECRET" -n "$AWS_LBC_NAMESPACE" || true
+      kubectl get mutatingwebhookconfiguration "$AWS_LBC_WEBHOOK_NAME" || true
+      kubectl get validatingwebhookconfiguration "$AWS_LBC_WEBHOOK_NAME" || true
+      exit 1
+    fi
+
+    sleep "$POLL_SECONDS"
+    waited=$((waited + POLL_SECONDS))
+  done
+}
+
+refresh_aws_load_balancer_webhook_tls() {
+  local deployment_name=""
+
+  wait_for_aws_load_balancer_webhook_tls
+  deployment_name="$(get_aws_load_balancer_controller_deployment)"
+
+  if [[ -z "$deployment_name" ]]; then
+    echo "Unable to find AWS Load Balancer Controller deployment in namespace $AWS_LBC_NAMESPACE" >&2
+    exit 1
+  fi
+
+  echo "Refreshing AWS Load Balancer Controller webhook TLS..."
+  kubectl rollout restart "deployment/$deployment_name" -n "$AWS_LBC_NAMESPACE"
+  kubectl rollout status "deployment/$deployment_name" -n "$AWS_LBC_NAMESPACE" --timeout="$ROLLOUT_TIMEOUT"
 }
 
 # An ALB hostname alone does not prove that traffic reaches the application.
@@ -289,6 +350,12 @@ fi
 if [[ "$INSTALL_ALB_CONTROLLER" == "1" || "$WAIT_FOR_INGRESSES" == "1" || "$EXPOSE_ARGOCD" == "1" || "$EXPOSE_GRAFANA" == "1" || "$EXPOSE_PROMETHEUS" == "1" ]]; then
   echo "Waiting for AWS Load Balancer Controller to become ready..."
   wait_for_aws_load_balancer_controller
+
+  if [[ "$REFRESH_ALB_WEBHOOK_TLS" == "1" ]]; then
+    refresh_aws_load_balancer_webhook_tls
+  else
+    echo "Skipping AWS Load Balancer Controller webhook TLS refresh because REFRESH_ALB_WEBHOOK_TLS=$REFRESH_ALB_WEBHOOK_TLS"
+  fi
 fi
 
 # Grafana and Prometheus services are created asynchronously by their Argo CD

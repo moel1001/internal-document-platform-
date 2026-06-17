@@ -3,6 +3,11 @@
 
 clusterName: idp-eks
 
+# Reuse the chart-generated webhook certificate across Argo CD renders. If this
+# stays false, Helm can rotate the CA bundle without restarting controller pods,
+# leaving the API server unable to verify the admission webhook.
+keepTLSSecret: true
+
 serviceAccount:
   create: true
   name: aws-load-balancer-controller
