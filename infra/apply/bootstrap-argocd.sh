@@ -62,6 +62,9 @@ kubectl apply -f "$REPO_ROOT/argocd/document-service-app-eks.yaml"
 if [[ "$INSTALL_MONITORING" == "1" ]]; then
   echo "Applying EKS monitoring application..."
   kubectl apply -f "$REPO_ROOT/argocd/monitoring-app-eks.yaml"
+
+  echo "Applying EKS observability config application..."
+  kubectl apply -f "$REPO_ROOT/argocd/observability-config-app-eks.yaml"
 else
   echo "Skipping monitoring bootstrap. Set INSTALL_MONITORING=1 to include it."
 fi

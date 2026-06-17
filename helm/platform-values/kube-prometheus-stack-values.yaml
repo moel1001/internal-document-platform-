@@ -1,6 +1,15 @@
 # monitoring stack values managed via Argo CD
 
 grafana:
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      searchNamespace: monitoring
+      provider:
+        allowUiUpdates: false
+
   additionalDataSources:
     - name: Loki
       type: loki

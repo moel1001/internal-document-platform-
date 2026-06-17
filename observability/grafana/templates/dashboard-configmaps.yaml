@@ -1,0 +1,14 @@
+{{- range $path, $_ := .Files.Glob "dashboards/*.json" }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-{{ base $path | trimSuffix ".json" | lower | replace "_" "-" | replace "." "-" | trunc 42 | trimSuffix "-" }}
+  labels:
+    grafana_dashboard: "1"
+    app.kubernetes.io/name: observability-config
+    app.kubernetes.io/part-of: internal-document-platform
+data:
+  {{ base $path }}: |-
+{{ $.Files.Get $path | indent 4 }}
+{{- end }}

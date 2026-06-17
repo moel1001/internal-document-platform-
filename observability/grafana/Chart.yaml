@@ -1,0 +1,6 @@
+apiVersion: v2
+name: observability-config
+description: GitOps-managed Grafana dashboards for the Internal Document Platform
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
