@@ -12,6 +12,7 @@ grafana:
 
   additionalDataSources:
     - name: Loki
+      uid: loki
       type: loki
       access: proxy
       url: http://loki.logging:3100

@@ -563,7 +563,7 @@
     {
       "datasource": {
         "type": "loki",
-        "uid": "dfdtlwtmdrmkgc"
+        "uid": "loki"
       },
       "fieldConfig": {
         "defaults": {},
@@ -595,7 +595,7 @@
         {
           "datasource": {
             "type": "loki",
-            "uid": "dfdtlwtmdrmkgc"
+            "uid": "loki"
           },
           "direction": "backward",
           "editorMode": "code",
@@ -612,7 +612,7 @@
     {
       "datasource": {
         "type": "loki",
-        "uid": "dfdtlwtmdrmkgc"
+        "uid": "loki"
       },
       "fieldConfig": {
         "defaults": {},
@@ -644,7 +644,7 @@
         {
           "datasource": {
             "type": "loki",
-            "uid": "dfdtlwtmdrmkgc"
+            "uid": "loki"
           },
           "direction": "backward",
           "editorMode": "code",
@@ -804,7 +804,7 @@
     {
       "datasource": {
         "type": "loki",
-        "uid": "dfdtlwtmdrmkgc"
+        "uid": "loki"
       },
       "fieldConfig": {
         "defaults": {
@@ -897,7 +897,7 @@
         {
           "datasource": {
             "type": "loki",
-            "uid": "dfdtlwtmdrmkgc"
+            "uid": "loki"
           },
           "direction": "backward",
           "editorMode": "code",
