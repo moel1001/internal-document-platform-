@@ -3,7 +3,13 @@
   <img src="app/static/idp.svg" alt="Internal Document Platform Logo" width="240"/>
 </p>
 
-A production-style internal document validation platform modeling enterprise invoicing workflows, deployed via GitOps (Argo CD) with CI/CD (GitHub Actions → GHCR) and full observability (Prometheus + Grafana, and Loki).
+A production-style, demo-grade internal document validation platform modeling
+enterprise invoicing workflows.
+
+The project demonstrates AWS EKS infrastructure, Kubernetes delivery with
+GitOps, automated CI/CD, and full-stack observability with Prometheus, Grafana,
+Loki, and Promtail. It is built as a portfolio-ready reference implementation,
+not as a production-ready service.
 
 ## CI/CD Pipeline
 
@@ -38,24 +44,49 @@ A production-style internal document validation platform modeling enterprise inv
 
 ## Project Scope
 
-This repository implements a locally reproducible cloud-native platform simulating an internal document validation service used in enterprise invoicing workflows.
+This repository implements a cloud-native platform that simulates an internal
+document validation service used in enterprise invoicing workflows.
 
-The project focuses on operational practices rather than business complexity, including:
+The project started with a local KinD-based Kubernetes environment to validate
+the application, Helm chart, Argo CD deployment flow, and CI/CD feedback loop in
+a fast, reproducible setup. After proving that workflow locally, the platform
+was extended to AWS EKS with Terraform-managed infrastructure and the same
+GitOps delivery model.
 
-- GitOps-based Kubernetes deployments with Argo CD
-- Automated CI/CD pipelines with GitHub Actions
-- Metrics and logging for operational visibility
-- Kubernetes-native packaging using Helm
+The project focuses on operational practices rather than business complexity,
+including:
+
+- Local Kubernetes validation with KinD during the first project phase
+- AWS infrastructure provisioned with Terraform, including VPC networking and
+  an EKS cluster
+- Kubernetes-native packaging with Helm
+- GitOps-based deployments and reconciliation with Argo CD
+- CI/CD automation with GitHub Actions and GitHub Container Registry
+- Metrics, logs, and dashboards for operational visibility
 
 ## Architecture
 
-![Architecture diagram](docs/diagrams/architecture.svg)
+The project has two complementary architecture views:
+
+- The local validation and delivery view shows how GitHub Actions, GHCR, Helm,
+  Argo CD, and Kubernetes worked together during the KinD-based project phase.
+- The cloud runtime view shows the AWS EKS environment, Terraform-managed
+  infrastructure, Kubernetes workloads, ingress path, and observability stack.
+
+### Local Validation and GitOps Delivery
+
+![CI/CD and GitOps architecture diagram](docs/diagrams/architecture.svg)
+
+### Cloud Runtime Architecture
+
+![EKS architecture diagram](docs/diagrams/internal-document-platform-eks-architecture.svg)
 
 ---
 ## Repository Structure
 
 **Application (`app/`)**  
-FastAPI service implementing validation logic, metrics instrumentation, and a lightweight traffic simulation UI.
+FastAPI service implementing validation logic, metrics instrumentation, health
+checks, and a lightweight traffic simulation UI.
 
 Exposes:
 - `POST /validate`
@@ -63,14 +94,33 @@ Exposes:
 - `GET /health/*`
 - `GET /ui`
 
-**Kubernetes Packaging (`helm/document-service/`)**  
-Helm chart defining Deployment, Service, and ServiceMonitor resources.
+**Application Helm Chart (`helm/document-service/`)**
+Kubernetes packaging for the validation service, including Deployment, Service,
+Ingress, ServiceMonitor, default local values, and EKS override values.
 
-**GitOps (`argocd/`)**  
-Argo CD Application manifest for declarative deployment.
+**Platform Helm Values (`helm/platform-values/`)**
+Versioned values for platform charts used by Argo CD, including
+kube-prometheus-stack, Loki, and the AWS Load Balancer Controller.
 
-**CI (`.github/workflows/`)**  
-GitHub Actions workflow for validation, security scanning, build, and automated GitOps release.
+**GitOps (`argocd/`)**
+Argo CD Application manifests for the local and EKS deployment paths. The EKS
+manifests declare the document service, monitoring stack, Loki stack, AWS Load
+Balancer Controller, observability dashboard config, and UI ingress resources.
+
+**Infrastructure (`infra/`)**
+Terraform and lifecycle scripts for the AWS environment. Terraform defines the
+VPC, subnets, EKS cluster, managed node group, IAM resources, and load balancer
+controller integration. The apply and destroy scripts coordinate provisioning,
+Argo CD bootstrap, workload deployment, smoke testing, and teardown.
+
+**Observability Config (`observability/grafana/`)**
+Grafana dashboard JSON and a small Helm chart that packages dashboards into
+ConfigMaps for GitOps-managed provisioning.
+
+**CI/CD (`.github/workflows/`)**
+GitHub Actions workflows for application validation, image build and release,
+infrastructure validation, documentation link checks, vulnerability scanning,
+and GitOps image tag updates.
 
 **Local Access (`deploy/local/`)**  
 Optional local convenience layer for accessing platform UIs via friendly hostnames.
@@ -81,6 +131,7 @@ Optional local convenience layer for accessing platform UIs via friendly hostnam
 
 - 🚀 [Local Development Guide](docs/local-development.md)
 - 📦 [Repository Structure](docs/repository-structure.md)
+- [Infrastructure Operations Guide](infra/README.md)
 
 ---
 
@@ -138,9 +189,31 @@ To prevent label cardinality explosion:
 ---
 ## Observability Dashboards
 
-The platform includes Grafana dashboards for monitoring service behavior, traffic patterns, validation failures, and latency.
+The platform includes Grafana dashboards for monitoring service behavior,
+traffic patterns, validation failures, and latency.
 
-All dashboards are versioned in this repository under the [`/dashboards`](observability/grafana/dashboards/) directory as JSON exports.
+All dashboards are versioned in this repository under
+[`observability/grafana/dashboards/`](observability/grafana/dashboards/) as JSON
+exports.
+
+Dashboard provisioning is also managed through GitOps. The
+[`observability/grafana/Chart.yaml`](observability/grafana/Chart.yaml) chart
+packages the dashboard JSON files, and
+[`observability/grafana/templates/dashboard-configmaps.yaml`](observability/grafana/templates/dashboard-configmaps.yaml)
+renders each dashboard as a labeled ConfigMap. Grafana's sidecar watches for
+ConfigMaps labeled `grafana_dashboard: "1"` in the `monitoring` namespace, so
+dashboard changes can be synchronized and restored by Argo CD.
+
+The EKS GitOps path uses
+[`argocd/observability-config-app-eks.yaml`](argocd/observability-config-app-eks.yaml)
+to reconcile the dashboard configuration from this repository.
+
+Dashboard provisioning validation checks:
+
+- `observability-config-eks` syncs successfully in Argo CD
+- Dashboard ConfigMaps are created in the `monitoring` namespace
+- Dashboards appear in Grafana without manual import
+- Deleting a dashboard ConfigMap is corrected by Argo CD self-healing
 
 ### Document Service – Observability
 
@@ -279,6 +352,9 @@ The platform is composed of multiple Argo CD applications managed through GitOps
 - Application behavior is transparently observable through metrics, logs, and dashboards
 
 ## Non-goals
-- No ingress or authentication
-- No persistent storage
-- No managed cloud services
+- This is a portfolio-grade platform demonstration, not a production-ready
+  service.
+- Public HTTPS/TLS access, custom domains, and authentication are intentionally
+  deferred to a later release.
+- Multi-environment promotion, autoscaling, managed persistence, and formal SLOs
+  are outside the current release scope.
