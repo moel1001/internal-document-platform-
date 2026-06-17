@@ -9,10 +9,12 @@ A production-style internal document validation platform modeling enterprise inv
 
 <p align="center">
   <img src="https://img.shields.io/github/actions/workflow/status/moel1001/internal-document-platform-/ci.yml?branch=main&style=for-the-badge&logo=githubactions&logoColor=white"/>
-  <img src="https://img.shields.io/github/license/moel1001/internal-document-platform-?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT"/>
   <img src="https://img.shields.io/github/last-commit/moel1001/internal-document-platform-?style=for-the-badge&logo=git&logoColor=white"/>
   <img src="https://img.shields.io/github/v/release/moel1001/internal-document-platform-?style=for-the-badge&logo=github"/>
 </p>
+
+
 
 ![CICD Pipeline](docs/diagrams/pipeline.svg)
 
