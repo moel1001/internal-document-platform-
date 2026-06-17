@@ -39,10 +39,12 @@ REQUEST_LATENCY = Histogram(
     ["result", "document_type"],
 )
 
+
 def metric_document_type(raw: str) -> str:
     """Prevent unbounded label cardinality. Unknown/invalid values collapse into 'invalid'."""
     v = (raw or "").strip()
     return v if v in ALLOWED_DOCUMENT_TYPES else "invalid"
+
 
 def reason_code_for_rejection(document: "DocumentRequest", exc_msg: str) -> str:
     """
@@ -62,6 +64,7 @@ def reason_code_for_rejection(document: "DocumentRequest", exc_msg: str) -> str:
         return "empty_source_system"
     return "other"
 
+
 class DocumentRequest(BaseModel):
     document_id: str
     document_type: str
@@ -73,6 +76,7 @@ class ValidationResponse(BaseModel):
     document_id: str
     status: str
     reason: str | None = None
+
 
 @app.post("/validate", response_model=ValidationResponse)
 def validate_document(document: DocumentRequest):
@@ -123,32 +127,38 @@ def validate_document(document: DocumentRequest):
         duration = time.monotonic() - start
 
         REQUEST_COUNT.labels(result=result_label, document_type=doc_type_label).inc()
-        REQUEST_LATENCY.labels(result=result_label, document_type=doc_type_label).observe(
-            duration
-        )
+        REQUEST_LATENCY.labels(
+            result=result_label, document_type=doc_type_label
+        ).observe(duration)
 
         if result_label == "REJECTED" and reason_code is not None:
             VALIDATION_FAILURES.labels(
                 reason_code=reason_code, document_type=doc_type_label
             ).inc()
 
+
 UI_HTML = Path(__file__).with_name("ui.html").read_text(encoding="utf-8")
+
 
 @app.get("/", include_in_schema=False)
 def root():
     return RedirectResponse(url="/ui")
 
+
 @app.get("/ui", response_class=HTMLResponse, include_in_schema=False)
 def ui():
     return UI_HTML
+
 
 @app.get("/metrics")
 def metrics():
     return Response(content=generate_latest(), media_type="text/plain")
 
+
 @app.get("/health/live")
 def health_live():
     return {"status": "alive"}
+
 
 @app.get("/health/ready")
 def health_ready():

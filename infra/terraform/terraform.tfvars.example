@@ -1,0 +1,7 @@
+aws_region = "eu-central-1"
+
+# Replace the example API CIDR with own public IP before applying.
+cluster_endpoint_public_access_cidrs = ["203.0.113.10/32"]
+
+# Keep this explicit so apply.sh can verify free-tier eligibility before apply.
+node_instance_type = "m7i-flex.large"
