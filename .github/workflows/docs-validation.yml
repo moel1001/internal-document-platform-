@@ -8,12 +8,16 @@ on:
       - ".github/workflows/docs-validation.yml"
       - "README.md"
       - "docs/**"
+      - "infra/README.md"
+      - "deploy/local/README.md"
   push:
     branches: ["main"]
     paths:
       - ".github/workflows/docs-validation.yml"
       - "README.md"
       - "docs/**"
+      - "infra/README.md"
+      - "deploy/local/README.md"
 
 concurrency:
   group: docs-validation-${{ github.ref }}
@@ -36,6 +40,9 @@ jobs:
         with:
           args: >
             --exclude "^http://localhost(:[0-9]+)?/"
+            --exclude "^https?://[^/]+\.local(/.*)?$"
             --exclude "^https://img\.shields\.io/"
             README.md
             "docs/**/*.md"
+            infra/README.md
+            deploy/local/README.md

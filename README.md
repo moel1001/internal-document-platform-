@@ -333,7 +333,8 @@ pipeline.
 
 ### Push to `main` (Automated Release)
 
-When changes are merged into `main`, the CI pipeline performs the release process:
+When application or container changes are pushed to `main`, the CI pipeline
+performs the release process:
 
 1. Build the container image
 2. Push the image to GitHub Container Registry (GHCR)

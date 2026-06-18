@@ -210,6 +210,7 @@ Main workflow ([`ci.yml`](../.github/workflows/ci.yml)):
 - Unit tests
 - Python compile sanity check
 - Dependency vulnerability scan
+- Dockerfile linting
 - Docker build
 - Built-container smoke test
 - Container vulnerability scan
@@ -224,13 +225,12 @@ Infrastructure validation
 - Kubernetes manifest schema validation
 - Argo CD manifest validation
 - Bash syntax checks and ShellCheck
-- Dockerfile linting
 - Secret scanning
 
 Documentation validation
 ([`docs-validation.yml`](../.github/workflows/docs-validation.yml)):
 
-- Markdown and README link checking
+- README, docs, infrastructure, and local access link checking
 - Documentation-only path triggers
 
 ## Documentation
