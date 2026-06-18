@@ -10,6 +10,13 @@
 docker build -t document-service:0.1.0 .
 docker run --rm -p 8000:8000 document-service:0.1.0
 ```
+
+Open the validation UI at:
+
+```text
+http://localhost:8000/ui
+```
+
 ### Test endpoints
 
 #### Health:

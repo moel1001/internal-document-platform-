@@ -11,19 +11,18 @@ GitOps, automated CI/CD, and full-stack observability with Prometheus, Grafana,
 Loki, and Promtail. It is built as a portfolio-ready reference implementation,
 not as a production-ready service.
 
-## CI/CD Pipeline
-
 <p align="center">
-  <img src="https://img.shields.io/github/actions/workflow/status/moel1001/internal-document-platform-/ci.yml?branch=main&style=for-the-badge&logo=githubactions&logoColor=white"/>
-  <img src="https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT"/>
-  <img src="https://img.shields.io/github/last-commit/moel1001/internal-document-platform-?style=for-the-badge&logo=git&logoColor=white"/>
-  <img src="https://img.shields.io/github/v/release/moel1001/internal-document-platform-?style=for-the-badge&logo=github"/>
+  <a href="https://github.com/moel1001/internal-document-platform-/actions/workflows/ci.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/moel1001/internal-document-platform-/ci.yml?branch=main&style=for-the-badge&logo=githubactions&logoColor=white" alt="CI status"/>
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="MIT license"/>
+  </a>
+  <img src="https://img.shields.io/github/last-commit/moel1001/internal-document-platform-?style=for-the-badge&logo=git&logoColor=white" alt="Last commit"/>
+  <img src="https://img.shields.io/github/v/release/moel1001/internal-document-platform-?style=for-the-badge&logo=github" alt="Latest release"/>
 </p>
 
-
-
 ![CICD Pipeline](docs/diagrams/pipeline.svg)
-
 
 <p align="center">
 <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white"/>
@@ -84,15 +83,9 @@ The project has two complementary architecture views:
 ---
 ## Repository Structure
 
-**Application (`app/`)**  
+**Application (`app/`)**
 FastAPI service implementing validation logic, metrics instrumentation, health
 checks, and a lightweight traffic simulation UI.
-
-Exposes:
-- `POST /validate`
-- `GET /metrics`
-- `GET /health/*`
-- `GET /ui`
 
 **Application Helm Chart (`helm/document-service/`)**
 Kubernetes packaging for the validation service, including Deployment, Service,
@@ -122,7 +115,7 @@ GitHub Actions workflows for application validation, image build and release,
 infrastructure validation, documentation link checks, vulnerability scanning,
 and GitOps image tag updates.
 
-**Local Access (`deploy/local/`)**  
+**Local Access (`deploy/local/`)**
 Optional local convenience layer for accessing platform UIs via friendly hostnames.
 
 ---
@@ -130,6 +123,7 @@ Optional local convenience layer for accessing platform UIs via friendly hostnam
 ## Documentation
 
 - 🚀 [Local Development Guide](docs/local-development.md)
+- ☁️ [AWS EKS Deployment Guide](docs/eks-deployment.md)
 - 📦 [Repository Structure](docs/repository-structure.md)
 - [Infrastructure Operations Guide](infra/README.md)
 
@@ -142,6 +136,14 @@ commonly found in enterprise invoicing systems. Documents such as invoices,
 delivery notes, and certificates must pass structural and metadata validation
 before being accepted into downstream systems.
 
+### API Endpoints
+
+- `POST /validate` validates a document payload and returns an accepted or
+  rejected result.
+- `GET /metrics` exposes Prometheus metrics for scraping.
+- `GET /health/*` exposes service health checks.
+- `GET /ui` opens the lightweight validation and traffic simulation UI.
+
 ### Validation Rules
 A request is **ACCEPTED** only if:
 - `document_id` is not empty
@@ -153,11 +155,13 @@ Otherwise it is **REJECTED** with a `reason`.
 
 ### Validation UI & Traffic Simulation
 
-A lightweight web interface is available at `/ui` for validation testing and traffic simulation.
+A lightweight web interface is available at `/ui` for validation testing and
+traffic simulation.
 
 ![Validation UI – Traffic Simulation](docs/screenshots/ui-traffic-simulation.png)
 
-The UI is designed for controlled validation testing and observability demonstrations. It allows:
+The UI is designed for controlled validation testing and observability
+demonstrations. It allows:
 
 - Submitting single document validation requests
 - Generating valid or invalid example payloads
@@ -165,20 +169,25 @@ The UI is designed for controlled validation testing and observability demonstra
 - Generating batch traffic for load and monitoring verification
 - Inspecting the equivalent curl command for API parity
 
-The load testing section enables reproducible traffic generation to validate Prometheus metrics, Grafana dashboards, and logging behavior without requiring external tools. 
+The load testing section enables reproducible traffic generation to validate
+Prometheus metrics, Grafana dashboards, and logging behavior without requiring
+external tools.
 
-It is intentionally designed to support future extension toward more production-like traffic simulation (e.g., mixed valid/invalid ratios, burst patterns, sustained load), enabling controlled experiments on dashboard behavior and alerting thresholds.
+It is intentionally designed to support future extension toward more
+production-like traffic simulation, such as mixed valid/invalid ratios, burst
+patterns, and sustained load. That enables controlled experiments on dashboard
+behavior and alerting thresholds.
 
 ### Metrics (Prometheus)
 Exposed on `/metrics` using `prometheus_client`:
 
-- document_validation_requests_total (Counter)  
+- document_validation_requests_total (Counter)
   Labels: `result`, `document_type`
 
-- document_validation_failures_total (Counter)  
+- document_validation_failures_total (Counter)
   Labels: `reason_code`, `document_type`
 
-- document_validation_request_latency_seconds (Histogram)  
+- document_validation_request_latency_seconds (Histogram)
   Labels: `result`, `document_type`
 
 To prevent label cardinality explosion:
@@ -190,74 +199,85 @@ To prevent label cardinality explosion:
 ## Observability Dashboards
 
 The platform includes Grafana dashboards for monitoring service behavior,
-traffic patterns, validation failures, and latency.
+traffic patterns, validation failures, log activity, and latency.
 
-All dashboards are versioned in this repository under
-[`observability/grafana/dashboards/`](observability/grafana/dashboards/) as JSON
-exports.
+The dashboards are designed to answer four operational questions:
 
-Dashboard provisioning is also managed through GitOps. The
-[`observability/grafana/Chart.yaml`](observability/grafana/Chart.yaml) chart
-packages the dashboard JSON files, and
-[`observability/grafana/templates/dashboard-configmaps.yaml`](observability/grafana/templates/dashboard-configmaps.yaml)
-renders each dashboard as a labeled ConfigMap. Grafana's sidecar watches for
-ConfigMaps labeled `grafana_dashboard: "1"` in the `monitoring` namespace, so
-dashboard changes can be synchronized and restored by Argo CD.
+- Is the service receiving traffic?
+- Are documents being accepted or rejected at unusual rates?
+- Which document types or validation reasons are causing failures?
+- Is validation latency staying within an expected range?
 
-The EKS GitOps path uses
-[`argocd/observability-config-app-eks.yaml`](argocd/observability-config-app-eks.yaml)
-to reconcile the dashboard configuration from this repository.
+### Document Service - Observability
 
-Dashboard provisioning validation checks:
+This dashboard focuses on validation outcomes and operational triage. It helps
+show whether traffic is flowing, whether rejections are increasing, and which
+document types or reason codes are contributing to failures.
+
+![Observability Dashboard](docs/screenshots/Grafana_Dashboard_Observability.png)
+
+### Latency & Performance
+
+This dashboard focuses on performance behavior. It highlights percentile
+latency and helps identify whether slowdowns are connected to validation
+results or specific document types.
+
+![Latency Dashboard](docs/screenshots/Grafana_Dashboard_Latency.png)
+
+### Dashboard Inputs
+
+The dashboards are based on the metrics exposed by the application:
+
+- `document_validation_requests_total`
+- `document_validation_failures_total`
+- `document_validation_request_latency_seconds`
+
+Log panels use the GitOps-provisioned Loki datasource with the stable UID
+`loki`.
+
+### Dashboard Inventory
+
+| Dashboard | Purpose | Main Signals |
+|---|---|---|
+| Document Service - Observability | Tracks validation behavior and traffic quality | Request rate, rejection rate, accepted/rejected trends, failure reasons, document-type distribution |
+| Latency & Performance | Tracks service response-time behavior | P50/P95/P99 latency, latency by validation result, latency by document type |
+
+### GitOps Provisioning
+
+Dashboard provisioning is managed declaratively through these files:
+
+- [`observability/grafana/dashboards/`](observability/grafana/dashboards/)
+  stores the Grafana dashboard JSON exports.
+- [`observability/grafana/Chart.yaml`](observability/grafana/Chart.yaml)
+  defines the small internal Helm chart used for dashboard packaging.
+- [`observability/grafana/templates/dashboard-configmaps.yaml`](observability/grafana/templates/dashboard-configmaps.yaml)
+  renders each dashboard JSON file as a ConfigMap labeled
+  `grafana_dashboard: "1"`.
+- [`argocd/observability-config-app-eks.yaml`](argocd/observability-config-app-eks.yaml)
+  tells Argo CD to reconcile those dashboard ConfigMaps into the `monitoring`
+  namespace.
+
+Grafana's dashboard sidecar watches for the labeled ConfigMaps, so dashboard
+changes can be synchronized and restored by Argo CD.
+
+
+### Validation Checks
 
 - `observability-config-eks` syncs successfully in Argo CD
 - Dashboard ConfigMaps are created in the `monitoring` namespace
 - Dashboards appear in Grafana without manual import
 - Deleting a dashboard ConfigMap is corrected by Argo CD self-healing
 
-### Document Service – Observability
-
-Tracks:
-- Request rate (req/s)
-- Rejection rate (%)
-- Accepted vs Rejected trends
-- Failure reason distribution
-- Traffic distribution by document type
-
-![Observability Dashboard](docs/screenshots/Grafana_Dashboard_Observability.png)
-
----
-
-### Latency & Performance
-
-Tracks:
-- P50 / P95 / P99 latency
-- Latency by result (ACCEPTED vs REJECTED)
-- Latency by document type
-
-![Latency Dashboard](docs/screenshots/Grafana_Dashboard_Latency.png)
-
----
-
-These dashboards are based on the metrics exposed in the application:
-
-- `document_validation_requests_total`
-- `document_validation_failures_total`
-- `document_validation_request_latency_seconds`
-
-The dashboards focus on:
-- Detecting quality degradation
-- Identifying document-type-specific issues
-- Performance regression detection
-- Incident triage support
-
 ---
 
 ## Centralized Logging: Loki + Promtail
 
-In addition to metrics-based observability, the platform includes centralized logging using **Loki** and **Promtail**.
+In addition to metrics-based observability, the platform includes centralized
+logging using **Loki** and **Promtail**.
 
-Metrics reveal service behavior such as request rate and latency, while logs provide detailed context for debugging validation failures and operational issues.
+Metrics reveal service behavior such as request rate and latency, while logs
+provide detailed context for debugging validation failures and operational
+issues.
 
 ---
 
@@ -265,29 +285,42 @@ Metrics reveal service behavior such as request rate and latency, while logs pro
 
 - Promtail tails Kubernetes container logs automatically
 - Loki stores logs locally (filesystem mode)
-- Grafana queries Loki via Kubernetes DNS (`loki.logging`)
+- Grafana queries Loki through Kubernetes DNS:
+  - Local/KinD: `http://loki.logging:3100`
+  - EKS: `http://loki-eks.logging:3100`
+- Grafana provisions the Loki datasource with the stable UID `loki`
 - No external storage or cloud services are used
 
 ---
 
 ## CI/CD & GitOps Automation
 
-This project uses  GitHub Actions for CI and Argo CD for GitOps-based deployments. Git is the single source of truth for the desired runtime state.
+This project uses GitHub Actions for CI and Argo CD for GitOps-based
+deployments. Git is the single source of truth for the desired runtime state.
+
+
+### Validation Coverage
+
+| Area | Checks |
+|---|---|
+| Python application | Ruff linting and formatting, pytest, Python compile check |
+| Dependencies and secrets | pip-audit, Gitleaks |
+| Container image | Docker build, containerized tests, readiness smoke test, Trivy image scan |
+| Dockerfile | Hadolint |
+| Helm and Kubernetes | Helm lint/template, kubeconform schema validation, Argo CD manifest validation |
+| Terraform | terraform fmt, terraform init -backend=false, terraform validate, TFLint, Trivy config scan |
+| Documentation | Lychee link checking for README and Markdown docs |
 
 ---
 
-### Pull Request Workflow (Validation)
+### Pull Request Workflow
 
-On pull requests to `main`, the pipeline performs validation steps only
+On pull requests to `main`, the workflows validate changes without publishing a
+new runtime image or deploying to the cluster.
 
-- Dependency installation
-- Dependency vulnerability scanning (`pip-audit`)
-- Unit tests (`pytest`)
-- Python compile sanity check
-- Container image build
-- Container image vulnerability scan (Trivy)
-
-No image is pushed and no deployment is triggered.
+Application changes run the app pipeline, infrastructure changes run the infra
+validation pipeline, and documentation changes run the docs validation
+pipeline.
 
 ---
 
@@ -315,14 +348,20 @@ Argo CD continuously reconciles the Kubernetes cluster with the declarative conf
 
 The platform defines multiple Argo CD applications in the `argocd/` directory:
 
-- `document-service` – the validation service deployed from the internal Helm chart
-- `monitoring` – the observability stack (Prometheus, Grafana, Alertmanager)
-- `loki` – the logging stack (Loki + Promtail)
+- `document-service` / `document-service-eks` – the validation service
+  deployed from the internal Helm chart
+- `monitoring` / `monitoring-eks` – the observability stack with Prometheus and
+  Grafana
+- `loki` / `loki-eks` – the logging stack with Loki and Promtail
+- `observability-config-eks` – GitOps-managed Grafana dashboard ConfigMaps
+- `aws-load-balancer-controller-eks` – AWS ALB integration for EKS ingress
 
-Each application is defined as an Argo CD Application resource referencing a Helm chart and configuration values stored in the repository.
+Each application is defined as an Argo CD Application resource referencing a
+Helm chart and configuration values stored in the repository.
 
-Argo CD monitors these definitions and ensures that the cluster state matches the declared configuration.  
-If drift occurs, the controller automatically reconciles the cluster back to the desired state.
+Argo CD monitors these definitions and ensures that the cluster state matches
+the declared configuration. If drift occurs, the controller automatically
+reconciles the cluster back to the desired state.
 
 The screenshots below show the applications after synchronization, reaching the **Healthy** and **Synced** state.
 
@@ -350,6 +389,18 @@ The platform is composed of multiple Argo CD applications managed through GitOps
 - Git serves as the single source of truth for runtime configuration (GitOps)
 - Kubernetes state reconciles declaratively via Argo CD
 - Application behavior is transparently observable through metrics, logs, and dashboards
+
+## Current Limitations
+
+- The EKS environment is a demo-grade fixed-size cluster, not a production
+  environment.
+- Browser-facing endpoints currently use temporary AWS ALB DNS names.
+- Custom domains, public HTTPS/TLS, SSO/RBAC, and hardened administrative
+  access are deferred to a later release.
+- Loki uses local filesystem storage instead of durable external object
+  storage.
+- Autoscaling, multi-environment promotion, formal SLOs, and production
+  persistence are intentionally out of scope for the current release.
 
 ## Non-goals
 - This is a portfolio-grade platform demonstration, not a production-ready
