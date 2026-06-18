@@ -28,7 +28,10 @@ not as a production-ready service.
 <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white"/>
 <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white"/>
 <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white"/>
+<img src="https://custom-icon-badges.demolab.com/badge/AWS-232F3E.svg?style=for-the-badge&logo=aws&logoColor=white"/>
 <img src="https://img.shields.io/badge/Kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white"/>
+<img src="https://custom-icon-badges.demolab.com/badge/EKS-FF9900.svg?style=for-the-badge&logo=kubernetes&logoColor=white"/>
+<img src="https://img.shields.io/badge/Terraform-844FBA?style=for-the-badge&logo=terraform&logoColor=white"/>
 <img src="https://img.shields.io/badge/Helm-0F1689?style=for-the-badge&logo=helm&logoColor=white"/>
 <img src="https://img.shields.io/badge/ArgoCD-EF7B4D?style=for-the-badge&logo=argo&logoColor=white"/>
 </p>
@@ -83,49 +86,53 @@ The project has two complementary architecture views:
 ---
 ## Repository Structure
 
-**Application (`app/`)**
+**Application ([`app/`](app/))**
 FastAPI service implementing validation logic, metrics instrumentation, health
 checks, and a lightweight traffic simulation UI.
 
-**Application Helm Chart (`helm/document-service/`)**
+**Application Helm Chart ([`helm/document-service/`](helm/document-service/))**
 Kubernetes packaging for the validation service, including Deployment, Service,
 Ingress, ServiceMonitor, default local values, and EKS override values.
 
-**Platform Helm Values (`helm/platform-values/`)**
+**Platform Helm Values ([`helm/platform-values/`](helm/platform-values/))**
 Versioned values for platform charts used by Argo CD, including
 kube-prometheus-stack, Loki, and the AWS Load Balancer Controller.
 
-**GitOps (`argocd/`)**
+**GitOps ([`argocd/`](argocd/))**
 Argo CD Application manifests for the local and EKS deployment paths. The EKS
 manifests declare the document service, monitoring stack, Loki stack, AWS Load
 Balancer Controller, observability dashboard config, and UI ingress resources.
 
-**Infrastructure (`infra/`)**
+**Infrastructure ([`infra/`](infra/))**
 Terraform and lifecycle scripts for the AWS environment. Terraform defines the
 VPC, subnets, EKS cluster, managed node group, IAM resources, and load balancer
 controller integration. The apply and destroy scripts coordinate provisioning,
 Argo CD bootstrap, workload deployment, smoke testing, and teardown.
 
-**Observability Config (`observability/grafana/`)**
+**Observability Config ([`observability/grafana/`](observability/grafana/))**
 Grafana dashboard JSON and a small Helm chart that packages dashboards into
 ConfigMaps for GitOps-managed provisioning.
 
-**CI/CD (`.github/workflows/`)**
+**CI/CD ([`.github/workflows/`](.github/workflows/))**
 GitHub Actions workflows for application validation, image build and release,
 infrastructure validation, documentation link checks, vulnerability scanning,
 and GitOps image tag updates.
 
-**Local Access (`deploy/local/`)**
+**Local Access ([`deploy/local/`](deploy/local/))**
 Optional local convenience layer for accessing platform UIs via friendly hostnames.
 
 ---
 
 ## Documentation
 
-- 🚀 [Local Development Guide](docs/local-development.md)
-- ☁️ [AWS EKS Deployment Guide](docs/eks-deployment.md)
-- 📦 [Repository Structure](docs/repository-structure.md)
-- [Infrastructure Operations Guide](infra/README.md)
+- 🚀 [Local Development Guide](docs/local-development.md) - run the FastAPI
+  service, Docker image, and local validation endpoints.
+- ☁️ [AWS EKS Deployment Guide](docs/eks-deployment.md) - create, verify, and
+  destroy the AWS EKS demo environment.
+- 📦 [Repository Structure](docs/repository-structure.md) - understand the
+  purpose of the main directories and platform components.
+- 🛠️ [Infrastructure Operations Guide](infra/README.md) - use the Terraform,
+  apply, destroy, skip-flag, and recovery workflows.
 
 ---
 
