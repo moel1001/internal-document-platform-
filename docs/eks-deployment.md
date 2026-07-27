@@ -172,6 +172,88 @@ bootstrap, ingress exposure, and smoke checks:
 SKIP_TERRAFORM=1 INSTALL_ARGOCD=0 AWS_PROFILE=<profile-name> ./infra/apply/apply-full-stack.sh
 ```
 
+## Recover EKS Access After A Public IP Change
+
+The EKS API endpoint is restricted by
+`cluster_endpoint_public_access_cidrs` in the local
+`infra/terraform/terraform.tfvars` file. Changing networks, locations, mobile
+hotspots, or VPN endpoints can change the workstation's public IPv4 address.
+When that happens, the cluster and workloads continue running, but `kubectl`
+may time out because the new address is not in the API allowlist.
+
+Do not destroy or rebuild the stack. Update only the EKS API allowlist.
+
+First, discover the current public IPv4 address:
+
+```bash
+# [READ-ONLY]
+curl -4 https://checkip.amazonaws.com
+```
+
+Replace the old `/32` entry in `infra/terraform/terraform.tfvars` with the new
+address:
+
+```hcl
+cluster_endpoint_public_access_cidrs = [
+  "<current-public-ip>/32"
+]
+```
+
+Create a saved, targeted recovery plan:
+
+```bash
+# [READ-ONLY] [LOCAL WRITE]
+AWS_PROFILE=<profile-name> terraform -chdir=infra/terraform plan \
+  -target='module.eks.aws_eks_cluster.this[0]' \
+  -out=ip-access.tfplan
+```
+
+Resource targeting is not intended for routine Terraform operations. It is
+used here as a narrow recovery measure so an EKS API allowlist change is not
+combined with unrelated provider-derived changes, such as add-on version or
+OIDC thumbprint recalculation.
+
+The expected summary is:
+
+```text
+Plan: 0 to add, 1 to change, 0 to destroy.
+```
+
+Inspect the saved plan before applying it:
+
+```bash
+# [READ-ONLY]
+terraform -chdir=infra/terraform show ip-access.tfplan
+```
+
+Confirm that:
+
+- `module.eks.aws_eks_cluster.this[0]` is the only resource being changed.
+- The resource will be updated in place.
+- The old CIDR is removed and the new CIDR is added.
+- No resource will be added, replaced, or destroyed.
+
+Apply the exact reviewed plan:
+
+```bash
+# [AWS CHANGE]
+AWS_PROFILE=<profile-name> terraform -chdir=infra/terraform apply ip-access.tfplan
+```
+
+After AWS completes the endpoint update, verify access and workload health:
+
+```bash
+# [READ-ONLY]
+kubectl get nodes
+kubectl get pods --all-namespaces
+```
+
+Do not use `0.0.0.0/0` as a convenience allowlist. Keep access restricted to
+the operator's current `/32` address. Before running the destroy workflow,
+verify that the current public IP is allowed because teardown must reach the
+Kubernetes API to remove Ingress resources and their AWS load balancers
+cleanly.
+
 ## Destroy The Full Stack
 
 Run from the repository root:

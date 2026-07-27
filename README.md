@@ -83,6 +83,14 @@ The project has two complementary architecture views:
 
 ![EKS architecture diagram](docs/diagrams/internal-document-platform-eks-architecture.svg)
 
+### GitOps Deployment
+
+Argo CD continuously reconciles the document service and supporting platform
+components, including ingress, monitoring, logging, and dashboard
+configuration.
+
+![Argo CD applications dashboard showing healthy and synchronized platform applications](docs/screenshots/argocd-applications-dashboard.png)
+
 ---
 ## Repository Structure
 
