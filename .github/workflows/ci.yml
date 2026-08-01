@@ -51,7 +51,7 @@ jobs:
 
       # install Python and enable pip dependency caching to speed up CI run
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: "pip"
